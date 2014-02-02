@@ -31,7 +31,7 @@ cd $DOC
 
 ### Rename README as per CTAN convention
 #
-mv $DOC/README.md $DOC/README
+mv README.md README
 
 ### Zero out the checksum value
 #

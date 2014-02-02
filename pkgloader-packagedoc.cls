@@ -36,7 +36,6 @@
 	\RequirePackage[xcolor]{mdframed}
 	\RequirePackage{marginnote}
 	\RequirePackage{listings}
-	\RequirePackage{lstautogobble}
 	\RequirePackage{textcomp}
 	\RequirePackage{hyperref}
 	\RequirePackage{needspace}
@@ -54,7 +53,6 @@
 \EnableCrossrefs         
 \CodelineIndex
 \RecordChanges
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % File Info                                                                    %
@@ -103,53 +101,54 @@
 % Example Environment Setup                                                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\lstset{
-	escapechar=|,
-	basicstyle=\ttfamily\upshape,
-	keywordstyle=\bfseries,
-	keywordstyle=[2]\color{green!40!black},
-	keywordstyle=[3]\itshape,
-	commentstyle=\color{gray},
-	frame=none,
-	tabsize=3,
-	columns=fixed,
-	autogobble=true
-}
+\renewcommand{\ttdefault}{pcr}
 
 \lstdefinelanguage{latex}{
 	language=[LaTeX]tex,
 	alsoletter={_,:},
+    morekeywords={before,after,late,early,if,
+                  error,always,because,loaded},
 	moretexcs={RequirePackage,RequirePackageWithOptions,Load,LoadPackagesNow},
 	mathescape,
 	texcsstyle=*\bfseries
 }
 
+\lstset{
+	language=latex,
+	escapechar=|,
+	basicstyle=\ttfamily\upshape,
+	keywordstyle=\ttfamily\upshape\bfseries,
+	keywordstyle=[2]\color{green!40!black},
+	keywordstyle=[3]\itshape,
+	commentstyle=\color{gray},
+	numbers=left,
+	numberstyle=\footnotesize,
+	frame=none,
+	columns=fixed,
+    literate={[}    {\bfseries[}    1
+             {]}    {\bfseries]}    1
+             {\{}   {\bfseries\{}   1
+             {\}}   {\bfseries\}}   1
+             {(}    {\bfseries(}    1
+             {)}    {\bfseries)}    1
+             {\&\&} {\bfseries\&\&} 2
+             {||}   {\bfseries||}   2
+             {!}    {\bfseries!}    1
+             {,}    {\bfseries,}    1
+}
+
 %%% Environments
 
 \lstnewenvironment{latex}[1][]{
-	\lstset{language=latex,
-	        morekeywords={before,after,late,early,if,
-	                      error,always,because},
-	        literate={[}    {\bfseries[}    1
-	                 {]}    {\bfseries]}    1
-	                 {\{}   {\bfseries\{}   1
-	                 {\}}   {\bfseries\}}   1
-	                 {(}    {\bfseries(}    1
-	                 {)}    {\bfseries)}    1
-	                 {\&\&} {\bfseries\&\&} 2
-	                 {||}   {\bfseries||}   2
-	                 {!}    {\bfseries!}    1
-	                 {,}    {\bfseries,}    1, #1}
+	\lstset{language=latex, #1}
 }{}
-\NoIndentAfterEnv{latex-pkgloader}
+\NoIndentAfterEnv{latex}
 
 %%% File Input Command
 
 \NewDocumentCommand\inputlatexcode{ O{} m }{%
 	\lstinputlisting[%
 		language=latex,
-	    morekeywords={before,after,late,early,if,
-	                  error,always,because},
 	    literate={[}    {\bfseries[}    1
 	             {]}    {\bfseries]}    1
 	             {\{}   {\bfseries\{}   1
@@ -164,23 +163,6 @@
 	\NoIndentAfterThis%
 }
 
-%%% Inline Code Delimiter
-
-\catcode`"=\active
-\lstMakeShortInline[
-	language=latex,
-	morekeywords={before,after,late,early,when,
-	              error,always,because},
-	literate={[}    {\bfseries[}    1
-	         {]}    {\bfseries]}    1
-	         {\{}   {\bfseries\{}   1
-	         {\}}   {\bfseries\}}   1
-	         {(}    {\bfseries(}    1
-	         {)}    {\bfseries)}    1
-	         {\&\&} {\bfseries\&\&} 2
-	         {||}   {\bfseries||}   2
-	         {!}    {\bfseries!}    1
-	         {,}    {\bfseries,}    1]"
 
 %%% Code formatting
 
@@ -391,6 +373,8 @@
 
 \AtEndDocument{
   \pagebreak
+  
+  \renewcommand{\ttdefault}{cmtt}
   
   \section{Implementation} \label{sec:implementation}
   

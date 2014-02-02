@@ -23,7 +23,8 @@
 % Setup                                                                        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+\def\nt#1{\ensuremath{\hbox{\footnotesize$\langle$}\mathit{#1}\hbox{\footnotesize$\rangle$}}}
+\def\|{\ \mid\ }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Global Changes                                                               %
@@ -40,9 +41,9 @@
 
 \section {Introduction}  % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
-\LaTeX\ can be extended by loading packages, which can add definitions,
-change existing ones, or otherwise extend functionality of the language,
-using a "\usepackage", "\RequirePackage" or "\RequirePackageWithOptions" command.
+\LaTeX\ can be extended by loading packages
+using a \lstinline+\usepackage+, \lstinline+\RequirePackage+ or \lstinline+\RequirePackageWithOptions+ command.
+Packages can add definitions, change existing ones, or otherwise extend functionality of the language.
 
 While the Turing-complete power of the \TeX\ family is quite useful at times, it does
 make it all too easy for independent package authors to step on each others
@@ -58,100 +59,142 @@ But this makes maintenance more difficult, because these package authors
 are `mixing concerns'; they put code related to other packages into their
 own package. And it is all done in an ad-hoc fashion.
 
-Enter "pkgloader".
-If this package becomes well-used, package authors will be able to
-develop in a more modular fashion. And more importantly, some frustration
-is taken away for the average document author.
+Enter \lstinline+pkgloader+.
 
 
 
 \subsection {Package Description} % % % % % % % % % % % % % % % % % % % % % %
 
-The idea is to load "pkgloader" before loading any other package
-% or document class
-.
-It can then intercept all package
-% and class
-loading requests, analyze them
+Here is an example of main file for a \LaTeX\ document
+which uses \lstinline+pkgloader+:
+
+\begin{latex}
+\documentclass{article}
+
+\RequirePackage{pkgloader}
+    \usepackage{xltxtra}
+    \usepackage[xetex]{graphicx}
+     $\smash{\raisebox{-1pt}{\small\vdots}}$
+\LoadPackagesNow
+
+\begin{document} $\ldots$ \end{document}
+\end{latex}
+
+The idea is to load \lstinline+pkgloader+ before loading any other package.
+It can then intercept all package loading requests, analyze them
 and load them properly, taking this burden off the shoulders of
 the average document author.
 
-The main file for a \LaTeX\ document using "pkgloader"
-looks something like this:
-\begin{latex}
-\documentclass{article}
-\RequirePackage{pkgloader}
-    \usepackage{xltxtra}
-    \usepackage{graphicx}
-     $\vdots$
-\LoadPackagesNow
-
-\begin{document}
-     $\vdots$
-\end{document}
-\end{latex}
-
 Between the second and sixth lines, the loading of all packages
-%and document classes
-is postponed. The "\LoadPackagesNow"
-command processes the information and
+is postponed. The \lstinline+\LoadPackagesNow+ command then
 loads the packages in some valid order. During this process,
 `conflict resolving' code may also be run, meant specifically to make
 other packages work together properly. If the above code were
-compiled without "pkgloader" (using the \XeTeX\ engine, in this case),
-the given order between "xltxtra" and "graphicx" would cause an error.
+compiled without \lstinline+pkgloader+ (using the \XeTeX\ engine, as of this writing),
+the given order between \lstinline+xltxtra+ and \lstinline+graphicx+ would
+cause an error.
 %%
 The main advantage to this approach is that the complexity of dealing
-with package conflicts is moved to the "pkgloader" package and handled
+with package conflicts is moved to the \lstinline+pkgloader+ package and handled
 in a systematic manner.
 
 If you are a document author, this may be all you need to know to use
-"pkgloader". If you are interested in more advanced functionality,
+\lstinline+pkgloader+. If you are interested in more advanced functionality,
 read on!
 
 
+\subsection {The \texttt{pkgloader} Area} % % % % % % % %
 
-\subsection {The \texttt{\textbackslash Load} Command} % % % % % % % %
+\describeanymacro
+	{\ttfamily\bfseries\textbackslash RequirePackage\!\!\!\!\!}
+	{{\ttfamily{\bfseries\{}pkgloader{\bfseries\}}\quad\ldots\quad{\bfseries\textbackslash LoadPackagesNow}}}
 
-Each invocation if the "\Load" command sets up a rule about
+The \lstinline+pkgloader+ area is the area between
+\lstinline+\RequirePackage{pkgloader}+ and
+\lstinline+\LoadPackagesNow+.
+Within it, the three traditional package-loading commands
+are `hijacked', recording information rather than loading
+packages directly. Also, a \lstinline+\Load+ command is
+available, which offers more flexibility in regulating
+package loading behavior.
+
+|pkgloader| accepts sets of rules coming from outside
+packages, though support is still somewhat limited.
+Any |pkgloader-|\nt{something}|.sty| file can be loaded
+within the |pkgloader| area by passing \nt{something}
+as a package option. The file |pkgloader-recommended.sty|
+is loaded this way by default. You can overwrite this by
+passing |recommended=false| as an option. For example:
+
+\begin{latex}
+\RequirePackage[recommended=false, my-better-rules]{pkgloader}
+     $\smash{\raisebox{-1pt}{\small\vdots}}$
+\LoadPackagesNow
+\end{latex}
+
+This area does not play by the recommended package loading
+rules, but uses the rules in |pkgloader-my-better-rules.sty|
+instead.
+
+
+
+\subsection {Package Loading Requests} % % % % % % % %
+
+
+\marginnote{\ttfamily\bfseries\textbackslash usepackage\\
+	\textbackslash RequirePackage\\
+	\textbackslash RequirePackageW{\ldots}s}\noindent
+For requesting specific packages inside the |pkgloader| area,
+just use the three commands always used
+for this purpose: \lstinline+\usepackage+, \lstinline+\RequirePackage+ and
+\lstinline+\RequirePackageWithOptions+. Their syntax and effective semantics
+are the same as they have always been. Their effects are just delayed,
+reordered and perhaps modified by the active rules.
+
+
+
+\subsection {Package Loading Rules} % % % % % % % %
+
+\marginnote{\ttfamily\bfseries\textbackslash Load}\noindent
+Each invocation if the \lstinline+\Load+ command sets up a rule about
 a package or packages, which are not necessarily ever loaded.
 These rules can come from any number of different sources.
-A central registry will be maintained together with "pkgloader" itself,
+A central registry will be maintained together with \lstinline+pkgloader+ itself
+in the form of |pkgloader-recommended.sty|,
 specifying well-known conflicts and resolutions.
 Individual package authors, however, can supply their own rules,
 as can document authors. Though ideally, for the
 average document author, things should `just work'.
 
-\def\nt#1{\ensuremath{\hbox{\footnotesize$\langle$}\mathit{#1}\hbox{\footnotesize$\rangle$}}}
-\def\|{\ \mid\ }
-
-The "\Load" command expects the following syntax:
+The \lstinline+\Load+ command expects the following syntax:
 
 \vskip\abovedisplayskip
 \begingroup
 \centering
 \begin{tabular}{r@{\ \ \ \ }r@{\ \ \ \ }l}
-	\nt{load}           &$::=$&   "\Load"$\ \nt{package}\ \;\nt{clause}_1\ \ldots\ \nt{clause}_i$  \\
-	                    &$ \|$&   "\Load error" $\ \ \ \ \,\nt{clause}_1\ \ldots\ \nt{clause}_i$                                              \\[2mm]
+	\nt{load}           &$::=$&   \lstinline+\Load+$\ \nt{package}\ \ \nt{clause}_1\ \ldots\ \nt{clause}_i$        \\
+	                    &$ \|$&   \lstinline+\Load error+ $\ \ \ \,\nt{clause}_1\ \ldots\ \nt{clause}_i$         \\[2mm]
 	
-	\nt{package}        &$::=$&   "["$\;\nt{options}\;$"] {"$\;\nt{pkg}\;$"} ["$\;\nt{version}\;$"]"            \\[2mm]
+	\nt{package}        &$::=$&   \lstinline+[+$\;\nt{options}\;$\lstinline+] {+$\;\nt{pkg}\;$\lstinline+} [+$\;\nt{version}\;$\lstinline+]+     \\[2mm]
 	
-	\nt{clause}         &$::=$&   $\nt{order}\ \ \|\ \ \nt{condition}\ \ \|\ \ \nt{reason}$  \\[2mm]
+	\nt{clause}         &$::=$&   $\nt{order}\ \ \|\ \ \nt{condition}\ \ \|\ \ \nt{reason}$              \\[2mm]
 	
-	\nt{order}          &$::=$&   "before {" $\nt{pkg}_1\,$", "$\ldots\,$", "$\nt{pkg}_j$ "}"  \\
-		                &$ \|$&   "after  {" $\nt{pkg}_1\,$", "$\ldots\,$", "$\nt{pkg}_j$ "}"  \\
-		                &$ \|$&   "early"                                               \\
-		                &$ \|$&   "late"                                                \\[2mm]
-		
-	\nt{condition}      &$::=$&   "always" $\ \ \|\ \ $ "if loaded" $\ \ \|\ \ $ "if {" $\nt{\phi}$ "}"                          \\[2mm]
+	\nt{order}          &$::=$&   \lstinline+before {+ $\nt{pkg}_1\,$\lstinline+, +$\ldots\,$\lstinline+, +$\nt{pkg}_j$ \lstinline+}+            \\
+		                &$ \|$&   \lstinline+after  {+ $\nt{pkg}_1\,$\lstinline+, +$\ldots\,$\lstinline+, +$\nt{pkg}_j$ \lstinline+}+            \\
+		                &$ \|$&   \lstinline+early+                                                                \\
+		                &$ \|$&   \lstinline+late+                                                                 \\[2mm]
 	
-	\nt{\phi}           &$::=$&   $\nt{pkg}$                         $\ \ \|\ \ $
-		                          $\nt{\phi}\ $"&&"$\ \nt{\phi}$    $\ \ \|\ \ $
-		                          $\nt{\phi}\ $"||"$\ \nt{\phi}$    $\ \ \|\ \ $
-		                          "!"$\;\nt{\phi}$                      $\ \ \|\ \ $
-		                          "("$\;\nt{\phi}\;$")"                          \\[2mm]
+	\nt{condition}      &$::=$&   \lstinline+always+                           $\ \ \|\ \ $
+	                              \lstinline+if loaded+                        $\ \ \|\ \ $
+	                              \lstinline+if {+ $\nt{\phi}$ \lstinline+}+   \\[2mm]
 	
-	\nt{reason}         &$::=$&   "because {" $\nt{token{-}list}$ "}"    
+	\nt{\phi}           &$::=$&   $\nt{pkg}$                                   $\ \ \|\ \ $
+		                          $\nt{\phi}\ $\lstinline+&&+$\ \nt{\phi}$     $\ \ \|\ \ $
+		                          $\nt{\phi}\ $\lstinline+||+$\ \nt{\phi}$     $\ \ \|\ \ $
+		                          \lstinline+!+$\;\nt{\phi}$                   $\ \ \|\ \ $
+		                          \lstinline+(+$\;\nt{\phi}\;$\lstinline+)+                                                  \\[2mm]
+	
+	\nt{reason}         &$::=$&   \lstinline+because {+ $\nt{token{-}list}$ \lstinline+}+    
 \end{tabular}
 \endgroup
 \vskip\belowdisplayskip
@@ -159,45 +202,53 @@ The "\Load" command expects the following syntax:
 \noindent
 \nt{pkg} represents a package name.
 \nt{token{-}list} should expand to a human-readable text without formatting.
-It is used in error messages and such.
 
+\marginnote{\ttfamily\bfseries if}\noindent
 The \( \nt{condition} \) clause determines under which package loading
 conditions any and all parts of a rule are invoked.
 Here is an example of the use of the \( \nt{condition} \) clause:
 \begin{latex}
-\Load {res-ie-lst} when {inputenc && listings}
+\Load {res-ie-lst} if {inputenc && listings}
 \Load {fixltx2e}   always
 \end{latex}
-|res-ie-lst| (a fictional package built specifically to resolve the
-conflict between |inputenc| and |listings|) will be loaded if requested
-specifically, or if both |inputenc| and |listings| are loaded. The |fixltx2e| package is
+
+\lstinline+res-ie-lst+ (a fictional package built specifically to resolve the
+conflict between \lstinline+inputenc+ and \lstinline+listings+) will be loaded if requested
+specifically, or if both \lstinline+inputenc+ and \lstinline+listings+ are loaded. The \lstinline+fixltx2e+ package is
 always loaded, as it was created to smooth over some mistakes in the
 \LaTeXe\ core.
-The |always| keyword makes a rule unconditional. The |if loaded|
+
+\marginnote{\ttfamily\bfseries always\\ if loaded}
+The \lstinline+always+ keyword makes a rule unconditional. The \lstinline+if loaded+
 directive makes a rule conditional on its package already being loaded anyway.
 This can be used to order two packages only when they are being loaded by other
-means.
+means, and is actually the default behavior (in other words, \lstinline+if loaded+
+really does nothing).
 
-The |before| and |after| keywords should be pretty straightforward. They
+\marginnote{\ttfamily\bfseries before\\ after}
+The \lstinline+before+ and \lstinline+after+ keywords should be pretty straightforward. They
 can be used for things like:
 \begin{latex}
 \Load {xltxtra} after {graphicx}
 \end{latex}
+which fixes the loading order between these two packages when they are both loaded.
+
+\marginnote{\ttfamily\bfseries early\\ late}
 But the set of \LaTeX\ packages is constantly growing, and it appears that
 some big packages should almost always be loaded early in the process,
-and others should almost always be loaded late. Therefore the |early|
-and |late| stages are provided as a fallback mechanism. If two packages
+and others should almost always be loaded late. Therefore the \lstinline+early+
+and \lstinline+late+ stages are provided as a fallback mechanism. If two packages
 are not related by an explicit application order, their loading order
-may still be decided by their relative stages: |early| before `normal' before |late|.
+may still be decided by their relative stages: \lstinline+early+ before `normal' before \lstinline+late+.
 That way, conflicts may be avoided in a majority of cases.
 This is implemented with |pkgloader-early| and |pkgloader-late| stubs in
 the loading order graph.
 
-Here is the example from above using
-the \( \nt{order} \) clause in addition to the \( \nt{condition} \) clause:
+The following example uses the \( \nt{order} \) clause
+in addition to the \( \nt{condition} \) clause:
 \begin{latex}
-\Load {res-ie-lst} when {inputenc && listings}
-                  after {inputenc,   listings}
+\Load {res-ie-lst} if {inputenc && listings}
+                after {inputenc ,  listings}
 \Load {fixltx2e} always early
 \end{latex}
 An important observation about the loading order is that it
@@ -206,43 +257,72 @@ might form a cycle when contradictory ordering rules are specified:
 \Load {pkg1} after {pkg2}
 \Load {pkg2} after {pkg1}
 \end{latex}
-In practice this could happen if the authors of |pkg1| and |pkg2|
+In practice this could happen if the authors of \lstinline+pkg1+ and \lstinline+pkg2+
 independently discover a conflict, and both try to solve it by patching
-their code and having their own package be loaded last. |pkgloader|
+their code and having their own package be loaded last. \lstinline+pkgloader+
 can provide a clear error message when this happens, allowing the
 two package authors to seek contact and collaborate on a solution.
 
-Now, about the |error| keyword.
+\marginnote{\ttfamily\bfseries error}
+Now, about the \lstinline+error+ keyword.
 Initially all package combinations are valid. But if two packages
 are irredeemably incompatible, their combination can be made to trigger
 an error message by a command such as the following:
 \begin{latex}
-\Load error when {algorithms && pseudocode}
+\Load error if {algorithms && pseudocode}
 \end{latex}
 These two packages provide almost identical functionality and conflict
 on many command-names. It was generally agreed upon that they should
 never be loaded together. Document authors should simply choose one
 or the other.
 
+\marginnote{\ttfamily\bfseries because}
 Finally, the \( \nt{reason} \) clause can be used to supply a
 human-readable explanation of a rule.
 We finish the above examples by providing reasons:
 \begin{latex}[basewidth=.598em]
-\Load {res-ie-lst} when {inputenc && listings}
-                  after {inputenc,   listings}
-     because {it allows the use of 1 byte unicode
-              characters in code listings}
+\Load {res-ie-lst} if {inputenc && listings}
+                after {inputenc ,  listings}
+      because {it allows the use of 1 byte unicode
+               characters in code listings}
 
 \Load {fixltx2e} always early
-     because {it fixes some imperfections in LaTeX2e}
+      because {it fixes some imperfections in LaTeX2e}
 
 \Load error when {algorithms && pseudocode}
-     because {they provide almost identical functionality
-              and conflict on many command names}
+      because {they provide almost identical functionality
+               and conflict on many command names}
 \end{latex}
 In the future, reasons will be extracted automatically to
 generate documentation. For now, they are displayed with error
 messages related to the rule in question.
+
+
+\subsection {Status} % % % % % % % %
+
+So far, \lstinline+pkgloader+ seems to work as expected, but has not
+yet been tested as extensively as it should be. Therefore, bug-reports
+on the |pkgloader| issue tracker on Github would be most welcome.
+Also, lots more recommended package loading rules are needed.
+
+I nonetheless decided to publish the package now, because I've been
+promising to do so for a while now:
+
+\begin{center}
+	\url{http://tex.stackexchange.com/questions/123174}
+\end{center}
+
+\noindent
+I hope that, with feedback and community collaboration,
+use of this package will become widespread and package
+authors will be able to work in a more modular fashion.
+
+\emph{Future versions} of |pkgloader| will be able to deal with
+document classes, to intelligently merge package options
+and to track packages loaded by other packages in order
+to better inform the user --- perhaps even fix problems
+by carrying information into the next run through auxiliary files.
+But most of this will depend on feedback.
 
 
 
