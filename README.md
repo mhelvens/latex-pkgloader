@@ -29,7 +29,6 @@ Installation
 
 `pkgloader.sty` is provided directly in the package archive. Put
 it in a place where your LaTeX distribution can find it.
-
 (`pkgloader.sty` is not generated, but manually maintained; you
  may use docstrip to remove the documentation, but you don't
  have to; it will just work the way it is)
@@ -40,7 +39,6 @@ Documentation
 
 `pkgloader.pdf` is provided directly in the package archive. To
 generate the documentation yourself, run LaTeX on pkgloader.tex.
-
 (`pkgloader.tex` does not contain the package code itself; it inputs
  `pkgloader.sty` directly to document the implementation)
 

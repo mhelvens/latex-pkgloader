@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+##################################################
+
+DOC="pkgloader"
+
+FILES="$DOC.sty          \
+       $DOC.tex           \
+       $DOC.pdf            \
+       $DOC-dry.sty         \
+       $DOC-packagedoc.cls   \
+       $DOC-early.sty         \
+       $DOC-late.sty           \
+       $DOC-true.sty            \
+       $DOC-false.sty            \
+       $DOC-error.sty             \
+       $DOC-recommended.sty        \
+       $DOC-test-rules.sty          \
+       test1.sty test2.sty test3.sty \
+       README.md"
+
+VERSION=0.1.0
+
+##################################################
+#
+### Create a directory to build in
+#
+mkdir $DOC
+cp $FILES $DOC
+cd $DOC
+
+### Rename README as per CTAN convention
+#
+mv $DOC/README.md $DOC/README
+
+### Zero out the checksum value
+#
+sed -r -i.bak 's/\\CheckSum\{[0-9]*\}/\\CheckSum\{0\}/;' $DOC.sty
+
+### First compilation
+#
+mkdir tmp
+pdflatex -output-directory tmp $DOC  ||  exit 1
+
+### Find and put in the correct checksum
+#
+CHECKSUM=`cat tmp/$DOC.log | grep "The checksum should be" \
+                           | sed -r 's/[^0-9]*([0-9]*)[^0-9]*/\1/'`
+sed -r -i "s/\\CheckSum\{0\}/\\CheckSum\{$CHECKSUM\}/;" $DOC.sty
+
+### Create index
+#
+makeindex -s gglo.ist -o tmp/$DOC.gls tmp/$DOC.glo
+makeindex -s gind.ist -o tmp/$DOC.ind tmp/$DOC.idx
+
+### Final two compilations
+#
+pdflatex -output-directory tmp $DOC  ||  exit 1
+pdflatex -output-directory tmp $DOC  ||  exit 1
+
+### Move generated document to build and root dirs
+#
+mv tmp/$DOC.pdf .
+cp $DOC.pdf ../$DOC-$VERSION.pdf
+rm -rf tmp
+
+### Tar it up
+#
+cd ..
+tar -czf $DOC-$VERSION.tar.gz $DOC
+rm -rf $DOC
+
