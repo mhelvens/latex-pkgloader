@@ -1,0 +1,60 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \iffalse %%%%
+%                                                                              %
+%  Copyright (c) 2014 - Michiel Helvensteijn   (www.mhelvens.net)              %
+%                                                                              %
+%  https://github.com/mhelvens/latex-pkgloader                                 %
+%                                                                              %
+%  This work may be distributed and/or modified under the conditions           %
+%  of the LaTeX Project Public License, either version 1.3 of this             %
+%  license or (at your option) any later version. The latest version           %
+%  of this license is in       http://www.latex-project.org/lppl.txt           %
+%  and version 1.3 or later is part of all distributions of LaTeX              %
+%  version 2005/12/01 or later.                                                %
+%                                                                              %
+%  This work has the LPPL maintenance status `maintained'.                     %
+%                                                                              %
+%  The Current Maintainer of this work is Michiel Helvensteijn.                %
+%                                                                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \fi %%%%
+%                                                             %
+%  This file is loaded whenever a combination of packages is  %
+%  requested that has been marked as illegal. Loading this    %
+%  file always results in the termination of the LaTeX run.   %
+%                                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%% Back to expl3 syntax
+%
+\ExplSyntaxOn
+
+
+%%% Add an empty line to the log before the errors are printed
+%
+\typeout{}
+
+
+%%% Initialization for the error-message loop
+%
+\cs_generate_variant:Nn \int_step_inline:nnnn {nnvn}
+\cs_generate_variant:Nn \int_compare:nNnTF    {nNvTF}
+\cs_generate_variant:Nn \msg_error:nnnn       {nnvv}
+
+
+%%% The loop issues one error message for each reason the
+%%% package combination is illegal. None of them are
+%%% critical or fatal errors; we terminate the run manually.
+%
+\int_step_inline:nnvn {1} {1} {g__pkgloader_count_(pkgloader-error)_int} {
+	\bool_if:cT {g__pkgloader_used_(pkgloader-error)_(#1)_bool} {
+		\msg_error:nnvv
+			{pkgloader} {illegal-combination}
+			{g__pkgloader_condition_(pkgloader-error)_(#1)_tl}
+			{g__pkgloader_reason_   (pkgloader-error)_(#1)_tl}
+	}
+}
+
+
+%%% Terminate the LaTeX run
+%
+\stop\bye

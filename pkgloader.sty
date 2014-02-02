@@ -1,0 +1,891 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \iffalse %%%%
+%                                                                              %
+%  Copyright (c) 2014 - Michiel Helvensteijn   (www.mhelvens.net)              %
+%                                                                              %
+%  https://github.com/mhelvens/latex-pkgloader                                 %
+%                                                                              %
+%  This work may be distributed and/or modified under the conditions           %
+%  of the LaTeX Project Public License, either version 1.3 of this             %
+%  license or (at your option) any later version. The latest version           %
+%  of this license is in       http://www.latex-project.org/lppl.txt           %
+%  and version 1.3 or later is part of all distributions of LaTeX              %
+%  version 2005/12/01 or later.                                                %
+%                                                                              %
+%  This work has the LPPL maintenance status `maintained'.                     %
+%                                                                              %
+%  The Current Maintainer of this work is Michiel Helvensteijn.                %
+%                                                                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \fi %%%%
+
+% \CheckSum{0}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Package Info}                                                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  First, the mandatory package meta-information:
+%  
+%    \begin{macrocode}
+\NeedsTeXFormat{LaTeX2e}
+\RequirePackage{expl3}
+\ProvidesExplPackage{pkgloader}{2014/01/29}{0.1.0}
+  {managing the options and loading order of LaTeX packages}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Required Packages}                                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  The following packages are required. Three standard |expl3|-related
+%  packages, one experimental package in |l3regex| and one user-contributed
+%  |expl3| package in |lt3graph|:
+%  
+%    \begin{macrocode}
+\RequirePackage{xparse}
+\RequirePackage{l3prop}
+\RequirePackage{l3keys2e}
+\RequirePackage{l3regex}
+\RequirePackage{lt3graph}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Package Code}                                                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  We need two global data-structures. One to keep track of all packages
+%  that are known, one to keep track of the packages that are actually
+%  going to be loaded, and their order:
+%  
+%    \begin{macrocode}
+\prop_new:N  \g__pkgloader_known_pkg_prop
+\graph_new:N \g__pkgloader_pkg_graph
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  We store pristine versions of the three package loading
+%  commands: 
+%  
+%    \begin{macrocode}
+\cs_gset_eq:NN \__pkgloader_usepkg:wnw                \usepackage
+\cs_gset_eq:NN \__pkgloader_RPkg:wnw            \RequirePackage
+\cs_gset_eq:NN \__pkgloader_RPkgWithOptions:wnw \RequirePackageWithOptions
+%    \end{macrocode}
+%  
+%  And we define a command to restore the commands back to
+%  their pristine versions:
+%  
+%    \begin{macrocode}
+\cs_new_protected:Nn \__pkgloader_restore_commands: {
+  \cs_gset_eq:NN \usepackage                \__pkgloader_usepkg:wnw
+  \cs_gset_eq:NN \RequirePackage            \__pkgloader_RPkg:wnw
+  \cs_gset_eq:NN \RequirePackageWithOptions \__pkgloader_RPkgWithOptions:wnw
+}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  This function globally registers a package loading rule,
+%  which can be created with either the |\Load| command or
+%  any of the three hijacked |\usepackage| commands:
+%  
+%    \begin{macrocode}
+\cs_new_protected:Nn \__pkgloader_register_rule:nnnnnnnnn {
+  % #1: package name
+  % #2: options
+  % #3: version
+  % #4: condition
+  % #5: compiled condition
+  % #6: packages to load before this one
+  % #7: packages to load after  this one
+  % #8: reason
+  % #9: command
+%    \end{macrocode}
+%  
+%  If this package hasn't been seen before, register
+%  it and create a rule-counter for it:
+%  
+%    \begin{macrocode}
+  \prop_if_in:NnF \g__pkgloader_known_pkg_prop {#1} {
+    \prop_gput:Nnn \g__pkgloader_known_pkg_prop {#1} {}
+    \int_new:c {g__pkgloader_count_(#1)_int}
+  }
+%    \end{macrocode}
+%  
+%  Increment the rule-counter:
+%  
+%    \begin{macrocode}
+  \int_incr:c {g__pkgloader_count_(#1)_int}
+%    \end{macrocode}
+%  
+%  Then, we set all properties of the 
+%  
+%    \begin{macrocode}
+  \tl_set:Nf \l_tmpa_tl {\int_use:c {g__pkgloader_count_(#1)_int}}
+  \tl_set:cn  {g__pkgloader_options_           (#1)_(\l_tmpa_tl)_tl} {#2}
+  \tl_set:cn  {g__pkgloader_version_           (#1)_(\l_tmpa_tl)_tl} {#3}
+  \tl_set:cn  {g__pkgloader_condition_         (#1)_(\l_tmpa_tl)_tl} {#4}
+  \tl_set:cn  {g__pkgloader_compiled_condition_(#1)_(\l_tmpa_tl)_tl} {#5}
+  \tl_set:cn  {g__pkgloader_predecessors_      (#1)_(\l_tmpa_tl)_tl} {#6}
+  \tl_set:cn  {g__pkgloader_successors_        (#1)_(\l_tmpa_tl)_tl} {#7}
+  \tl_set:cn  {g__pkgloader_reason_            (#1)_(\l_tmpa_tl)_tl} {#8}
+  \tl_set:cn  {g__pkgloader_command_           (#1)_(\l_tmpa_tl)_tl} {#9}
+  \bool_new:c {g__pkgloader_used_              (#1)_(\l_tmpa_tl)_bool}
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  These three functions are redefined to just register
+%  the package loading information rather than load the
+%  package immediately:
+%  
+%    \begin{macrocode}
+\RenewDocumentCommand {\usepackage} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnn
+        {\__pkgloader_usepkg:wnw} {#1} {#2} {#3} }
+\RenewDocumentCommand {\RequirePackage} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnn
+        {\__pkgloader_RPkg:wnw} {#1} {#2} {#3} }
+\RenewDocumentCommand {\RequirePackageWithOptions} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnn
+        {\__pkgloader_RPkgWithOptions:wnw} {#1} {#2} {#3} }
+%    \end{macrocode}
+%  
+%  Storing this information is delegated to the
+%  |\__pkgloader_register_rule:nnnnnnnnn| function:
+%  
+%    \begin{macrocode}
+\cs_new:Nn \__pkgloader_usepackage_cmd:nnnn {
+  \__pkgloader_register_rule:nnnnnnnnn
+    {#3} {#2} {#4}             % package name, options, version
+    {pkgloader-true}           % condition
+    {\c_true_bool}             % compiled condition
+    {} {}                      % predecessors, successors
+    {it~is~loaded~by~the~user} % reason
+    {#1}                       % command
+}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  This is a sophisticated user-level command for manipulating
+%  package loading order and conditions. It has a `non-standard'
+%  but convenient syntax, not showing any standard-
+%  
+%    \begin{macrocode}
+\NewDocumentCommand {\Load} {} {
+%    \end{macrocode}
+%  
+%  Initialize the variables used for storing given data:
+%  
+%    \begin{macrocode}
+  \tl_clear:N       \l__pkgloader_load_options_tl
+  \tl_clear:N       \l__pkgloader_load_name_tl
+  \tl_clear:N       \l__pkgloader_load_version_tl
+  \clist_clear:N    \l__pkgloader_load_pred_clist
+  \clist_clear:N    \l__pkgloader_load_succ_clist
+  \tl_clear:N       \l__pkgloader_load_cond_tl
+  \tl_clear:N       \l__pkgloader_load_because_tl
+  \bool_set_false:N \l__pkgloader_early_late_used_bool
+%    \end{macrocode}
+%  
+%  Start scanning for input:
+%  
+%    \begin{macrocode}
+  \__pkgloader_load_scan_pkg_:w
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This function starts scanning for the name of the package
+%  central to this rule, as well as the options and minimum
+%  version proposed for it.
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_:w {
+  \peek_charcode_remove_ignore_spaces:NTF e {% % % error
+    \__pkgloader_load_scan_pkg_e:w
+  }{\peek_charcode_remove_ignore_spaces:NTF [ {% % package options
+    \__pkgloader_load_scan_pkg_options:nw
+  }{ % % % % % % % % % % % % % % % % % % % % % % % package name
+    \__pkgloader_load_scan_pkg_:nw
+  }}
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  The |error| keyword can take the place of a package name,
+%  options and version. It is shorthand for the |pkgloader-error|
+%  file, and then jumps ahead to scanning clauses:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_e:w rror {
+  \tl_set:Nn \l__pkgloader_load_name_tl {pkgloader-error}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This scans the options and goes ahead to scan the package name:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_options:nw #1 ] {
+  \tl_set:Nn \l__pkgloader_load_options_tl {#1}
+  \__pkgloader_load_scan_pkg_:nw
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This scans the package name, peeks ahead for a minimum
+%  version, and otherwise goes on to scanning for clauses:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_:nw #1 {
+  \tl_set:Nn \l__pkgloader_load_name_tl {#1}
+  \peek_charcode_remove_ignore_spaces:NTF [ {% % % % package version
+    \__pkgloader_load_scan_version:nw
+  }{ % % % % % % % % % % % % % % % % % % % % % % % % clauses
+    \__pkgloader_load_scan_clause_:w
+  }
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This scans the version, and then goes ahead to scan for clauses:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_version:nw #1 ] {
+  \tl_set:Nn \l__pkgloader_load_version_tl {#1}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This is the starting- and return-point used to scan
+%  for (additional) |\Load| clauses:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_:w {
+  \peek_charcode_remove_ignore_spaces:NTF a {
+    \peek_charcode_remove:NTF l { % % % % % % % % % always
+      \__pkgloader_load_scan_clause_al:w
+    }{\peek_charcode_remove:NTF f { % % % % % % % % after
+      \__pkgloader_load_scan_clause_af:w
+    }{
+      \__pkgloader_load_end: a
+    }}
+  }{\peek_charcode_remove_ignore_spaces:NTF b { % 
+    \peek_charcode_remove:NTF e {
+      \peek_charcode_remove:NTF c { % % % % % % % because
+        \__pkgloader_load_scan_clause_bec:w
+      }{\peek_charcode_remove:NTF f { % % % % % % before
+        \__pkgloader_load_scan_clause_bef:w
+      }{
+        \__pkgloader_load_end: be
+      }}
+    }{
+      \__pkgloader_load_end: b
+    }
+  }{\peek_charcode_remove_ignore_spaces:NTF e { % % % early
+    \__pkgloader_load_scan_clause_e:w
+  }{\peek_charcode_remove_ignore_spaces:NTF i { % % % if
+    \__pkgloader_load_scan_clause_i:w
+  }{\peek_charcode_remove_ignore_spaces:NTF l { % % % late
+    \__pkgloader_load_scan_clause_l:w
+  }{
+    \__pkgloader_load_end:
+  }}}}}
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|always|'' clause:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_al:w ways {
+  \tl_put_right:Nn \l__pkgloader_load_cond_tl {~||~pkgloader-true}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|after|'' clause:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_af:w ter #1 {
+  \clist_put_right:Nn \l__pkgloader_load_pred_clist {#1}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|because|'' clause:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_bec:w ause #1 {
+  \tl_set:Nn \l__pkgloader_load_because_tl {#1}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|before|'' clause:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_bef:w ore #1 {
+  \clist_put_right:Nn \l__pkgloader_load_succ_clist {#1}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|early|'' clause, which orders
+%  this package before the ``|pkgloader-early|'' stub:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_e:w arly {
+  \bool_set_true:N \l__pkgloader_early_late_used_bool
+  \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-early}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|if|'' clause, which may still be
+%  a manual condition or the ``|loaded|'' keyword:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_i:w f {
+  \peek_charcode_remove_ignore_spaces:NTF l {
+    \__pkgloader_load_scan_clause_if_l:w
+  }{
+    \__pkgloader_load_scan_clause_if_:nw
+  }
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|if loaded|'' clause, which uses
+%  this package being loaded as the condition for the rule being used:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_if_l:w oaded {
+  \tl_put_right:Nn \l__pkgloader_load_cond_tl {~||~}
+  \tl_put_right:NV \l__pkgloader_load_cond_tl \l__pkgloader_load_name_tl
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|always|'' clause, which loads this
+%  package conditional on the ``|pkgloader-true|'' package being
+%  loaded (which always is):
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_if_:nw #1 {
+  \tl_put_right:Nn \l__pkgloader_load_cond_tl {~||~#1}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This processes the ``|late|'' clause, which orders
+%  this package after the ``|pkgloader-late|'' stub:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_l:w ate {
+  \bool_set_true:N \l__pkgloader_early_late_used_bool
+  \clist_put_right:Nn \l__pkgloader_load_pred_clist {pkgloader-late}
+  \__pkgloader_load_scan_clause_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  This function processes the collected data and registers it:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Nn \__pkgloader_load_end: {
+%    \end{macrocode}
+%  
+%  If this package should not specifically go early or late,
+%  it goes inbetween the two:
+%  
+%    \begin{macrocode}
+  \bool_if:NF \l__pkgloader_early_late_used_bool {
+    \tl_if_eq:VnF \l__pkgloader_load_name_tl {pkgloader-early} {
+      \tl_if_eq:VnF \l__pkgloader_load_name_tl {pkgloader-late} {
+        \clist_put_right:Nn \l__pkgloader_load_pred_clist {pkgloader-early}
+        \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-late }
+      }
+    }
+  }
+%    \end{macrocode}
+%  
+%  We remove the leading ``\texttt{\ \textbar\textbar\ }'' from the condition:
+%  
+%    \begin{macrocode}
+  \tl_remove_once:Nn \l__pkgloader_load_cond_tl {~||~}
+%    \end{macrocode}
+%  
+%  If no condition is given at all, the default is: ``|if loaded|''
+%  
+%    \begin{macrocode}
+  \tl_if_empty:NT \l__pkgloader_load_cond_tl
+    { \tl_set_eq:NN \l__pkgloader_load_cond_tl \l__pkgloader_load_name_tl }
+%    \end{macrocode}
+%  
+%  We now take the condition and compile it to a |\bool_if:|
+%  kind of syntax. The user-syntax is preserved to use in
+%  error messages and such:
+%  
+%    \begin{macrocode}
+  \tl_set_eq:NN \l__pkgloader_load_compd_cond_tl \l__pkgloader_load_cond_tl
+  \regex_replace_all:nnN
+    { [^\&\|\(\)\!\s]+ }
+    { (\c{graph_if_vertex_exist_p:Nn}
+       \c{g__pkgloader_pkg_graph}\cB\{\0\cE\}) }
+    \l__pkgloader_load_compd_cond_tl
+%    \end{macrocode}
+%  
+%  If no reason was given for this rule, it was obviously
+%  still because of reasons:
+%  
+%    \begin{macrocode}
+  \tl_if_empty:NT \l__pkgloader_load_because_tl
+    { \tl_set:Nn \l__pkgloader_load_because_tl {of~reasons} }
+%    \end{macrocode}
+%  
+%  Having gathered and processed the data, the rule is
+%  registered:
+%  
+%    \begin{macrocode}
+  \__pkgloader_register_rule:VVVVVVVVn
+    \l__pkgloader_load_name_tl
+    \l__pkgloader_load_options_tl
+    \l__pkgloader_load_version_tl
+    \l__pkgloader_load_cond_tl
+    \l__pkgloader_load_compd_cond_tl
+    \l__pkgloader_load_pred_clist
+    \l__pkgloader_load_succ_clist
+    \l__pkgloader_load_because_tl
+    \__pkgloader_RPkg:wnw % TODO: make configurable
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+}
+%    \end{macrocode}
+%  
+%  The scanning functions need the following variants:
+%  
+%    \begin{macrocode}
+\cs_generate_variant:Nn \tl_if_eq:nnF                        {VnF}
+\cs_generate_variant:Nn \graph_gput_vertex:Nn                {NV}
+\cs_generate_variant:Nn \graph_gput_edge:Nnn                 {NnV,NVn}
+\cs_generate_variant:Nn \seq_gput_right:Nn                   {NV}
+\cs_generate_variant:Nn \__pkgloader_register_rule:nnnnnnnnn {VVVVVVVVn}
+%    \end{macrocode}
+%  
+%  And they need the following local variables:
+%  
+%    \begin{macrocode}
+\tl_new:N    \l__pkgloader_load_options_tl
+\tl_new:N    \l__pkgloader_load_name_tl
+\tl_new:N    \l__pkgloader_load_version_tl
+\clist_new:N \l__pkgloader_load_pred_clist
+\clist_new:N \l__pkgloader_load_succ_clist
+\tl_new:N    \l__pkgloader_load_cond_tl
+\tl_new:N    \l__pkgloader_load_because_tl
+\bool_new:N  \l__pkgloader_early_late_used_bool
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  This function decides, based on all loaded rules and package
+%  requests, which packages, options and versions end up being
+%  loaded, and in which order.
+%  
+%    \begin{macrocode}
+\cs_new_protected:Nn \__pkgloader_select_packages: {
+%    \end{macrocode}
+%  
+%  We first set up a graph to record accepted orderings:
+%  
+%    \begin{macrocode}
+  \graph_clear:N \l__pkgloader_order_graph
+%    \end{macrocode}
+%  
+%  We then start a loop that runs at least once, then repeats
+%  while additional package configurations are still being added
+%  to the set. Eventually the loop reaches a fixed point and terminates.
+%  
+%    \begin{macrocode}
+  \bool_do_while:Nn \l__pkgloader_selection_changed_bool {
+    \bool_set_false:N \l__pkgloader_selection_changed_bool
+%    \end{macrocode}
+%  
+%  Then first, for all possible package configurations (a nested
+%  loop, but not doubly indented because it feels like one loop):
+%  
+%    \begin{macrocode}
+    \prop_map_inline:Nn \g__pkgloader_known_pkg_prop {%%%%%%%%%%%%%%   ##1
+    \int_step_inline:nncn {1} {1} {g__pkgloader_count_(##1)_int} {%% ####1
+%    \end{macrocode}
+%  
+%  If the current configuration should be loaded but still
+%  isn't selected (nested conditional; but again, not indented):
+%  
+%    \begin{macrocode}
+      \bool_if:cF {g__pkgloader_used_(##1)_(####1)_bool} {
+      \bool_if:vT {g__pkgloader_compiled_condition_(##1)_(####1)_tl} {
+%    \end{macrocode}
+%  
+%  We mark the package configuration as being used:
+%  
+%    \begin{macrocode}
+        \bool_set_true:c {g__pkgloader_used_(##1)_(####1)_bool}
+%    \end{macrocode}
+%  
+%  We record the configuration in the main package graph, which maps
+%  each package to a clist of selected configurations:
+%  
+%    \begin{macrocode}
+        \graph_get_vertex:NnNTF \g__pkgloader_pkg_graph {##1}
+                                \l__pkgloader_used_configs_tl {
+          \tl_if_empty:NTF \l__pkgloader_used_configs_tl
+            { \graph_gput_vertex:Nnf \g__pkgloader_pkg_graph {##1} {####1} }
+            { \graph_gput_vertex:Nnf \g__pkgloader_pkg_graph {##1}
+                                    {\l__pkgloader_used_configs_tl, ####1} }
+        }   { \graph_gput_vertex:Nnf \g__pkgloader_pkg_graph {##1} {####1} }
+%    \end{macrocode}
+%  
+%  In a separate graph, we record the associated (now activated)
+%  package loading orders. We don't do this in the main graph,
+%  because it may involve packages that are themselves not yet
+%  selected. These edges are later filtered and added to the main graph:
+%  
+%    \begin{macrocode}
+        \graph_put_vertex:Nn \l__pkgloader_order_graph {##1}
+        \clist_map_inline:cn {g__pkgloader_predecessors_(##1)_(####1)_tl} {
+          \graph_put_vertex:Nn \l__pkgloader_order_graph {########1}
+          \graph_get_edge:NnnNTF \l__pkgloader_order_graph
+                {########1} {##1} \l__pkgloader_used_configs_tl
+            { \graph_put_edge:Nnnn \l__pkgloader_order_graph
+                    {########1} {##1} {\l__pkgloader_used_configs_tl,####1} }
+            { \graph_put_edge:Nnnn \l__pkgloader_order_graph
+                    {########1} {##1}                               {####1} }
+        }
+        \clist_map_inline:cn {g__pkgloader_successors_(##1)_(####1)_tl} {
+          \graph_put_vertex:Nn \l__pkgloader_order_graph {########1}
+          \graph_get_edge:NnnNTF \l__pkgloader_order_graph
+                {##1} {########1} \l__pkgloader_used_configs_tl
+            { \graph_put_edge:Nnnn \l__pkgloader_order_graph
+                    {##1} {########1} {\l__pkgloader_used_configs_tl,####1} }
+            { \graph_put_edge:Nnnn \l__pkgloader_order_graph
+                    {##1} {########1}                               {####1} }
+        }
+%    \end{macrocode}
+%  
+%  We then mark the change, so a next iteration will be entered:
+%  
+%    \begin{macrocode}
+        \bool_set_true:N \l__pkgloader_selection_changed_bool
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+      }}
+    }}
+  }
+%    \end{macrocode}
+%  
+%  Finally, we put the applicable proposed orderings into the
+%  graph of selected packages:
+%  
+%    \begin{macrocode}
+  \graph_gput_edges_from:NN \g__pkgloader_pkg_graph \l__pkgloader_order_graph
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+}
+%    \end{macrocode}
+%  
+%  This function needs the following variations:
+%  
+%    \begin{macrocode}
+\cs_generate_variant:Nn \int_step_inline:nnnn  {nncn}
+\cs_generate_variant:Nn \bool_if:nT            {vT}
+\cs_generate_variant:Nn \withargs:nnn          {vvn}
+\cs_generate_variant:Nn \graph_gput_vertex:Nnn {Nnf}
+%    \end{macrocode}
+%  
+%  And it needs the following local variables:
+%  
+%    \begin{macrocode}
+\graph_new:N \l__pkgloader_order_graph
+\tl_new:N    \l__pkgloader_used_configs_tl
+\bool_new:N  \l__pkgloader_selection_changed_bool
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  Now follows the user command to consolidate all package loading
+%  requests and do the `right thing' (tm).
+%  
+%    \begin{macrocode}
+\NewDocumentCommand {\LoadPackagesNow} {} {
+%    \end{macrocode}
+%  
+%  We first select package configurations by their loading conditions:
+%  
+%    \begin{macrocode}
+  \__pkgloader_select_packages:
+%    \end{macrocode}
+%  
+%  We then restore |\usepackage|, |\RequirePackage| and
+%  |\RequirePackageWithOptions| to their normal definitions.
+%  
+%    \begin{macrocode}
+  \__pkgloader_restore_commands:
+%    \end{macrocode}
+%  
+%  Now, if there is a cycle in the derived package loading order: ERROR
+%  
+%    \begin{macrocode}
+  \graph_if_cyclic:NT \g__pkgloader_pkg_graph
+    {  \msg_fatal:nn {pkgloader} {cyclic-order}  }
+%    \end{macrocode}
+%  
+%  Then, for all used packages, in topological order\ldots
+%  
+%    \begin{macrocode}
+  \graph_map_topological_order_inline:Nn \g__pkgloader_pkg_graph {
+%    \end{macrocode}
+%  
+%  \ldots load that package. Though note that this code is still quite
+%  incomplete, because it loads the first viable configuration. It should:
+%  \begin{enumerate}
+%      \item  use |\RequirePackageWithOptions| if necessary,
+%             and use |\RequirePackage| otherwise,
+%      \item  allow custom merging schemes for options, and
+%      \item  use the latest required version.
+%  \end{enumerate}
+%    \begin{macrocode}
+    \withargs:xn { \clist_item:nn{##2}{1} } {
+      \withargs:vvnvn {g__pkgloader_command_(##1)_(####1)_tl}
+                      {g__pkgloader_options_(##1)_(####1)_tl}
+                      {##1}
+                      {g__pkgloader_version_(##1)_(####1)_tl} {
+        \IfValueTF {########2}
+          { \IfValueTF {########4} { ########1 [########2] {########3} [########4] }
+                                   { ########1 [########2] {########3}             } }
+          { \IfValueTF {########4} { ########1             {########3} [########4] }
+                                   { ########1             {########3}             } }
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+      }
+    }
+  }
+}
+%    \end{macrocode}
+%  
+%  The above function needs the following function variations:
+%  
+%    \begin{macrocode}
+\cs_generate_variant:Nn \withargs:nn {xn}
+\cs_generate_variant:Nn \withargs:nnnnn {vvnvn}
+%    \end{macrocode}
+%  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  Bootstrap |pkgloader| by inserting |pkgloader-true| in
+%  the graph directly, so all other packages can be inserted
+%  with rules, possibly using the |always| clause.
+%  
+%    \begin{macrocode}
+\graph_gput_vertex:Nn \g__pkgloader_pkg_graph {pkgloader-true}
+%    \end{macrocode}
+%  
+%  We then register the core logical rules of |pkgloader|,
+%  regarding such basics as |pkgmanager-false|,
+%  |pkgloader-error|, |pkgloader-early| and |pkgloader-late|.
+%  
+%    \begin{macrocode}
+\withargs:nn {of~the~mandatory~core~rules~of~pkgloader} {
+  \Load error if {pkgloader-false}                because {#1}
+  \Load {pkgloader-true}  always                  because {#1}
+  \Load {pkgloader-early} always                  because {#1}
+  \Load {pkgloader-late}  always                  because {#1}
+  \Load {pkgloader-early} before {pkgloader-late} because {#1}
+}
+%    \end{macrocode}
+%  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  We process the options passed to |pkgloader| as |.sty| files
+%  to be loaded before pkgloader does its thing. This
+%  should be used to define new |pkgloader| rules. Note,
+%  particularly, that any |\usepackage|-like command inside
+%  those |.sty| files is registered and processed by
+%  |pkgloader|; not loaded directly. 
+%
+%  First, we define the functions used to handle an option.
+%  
+%    \begin{macrocode}
+\cs_new:Nn \__pkgloader_process_option:n
+  { \__pkgloader_process_option:nn {#1} {true} }
+\cs_new:Nn \__pkgloader_process_option:nn
+  { \tl_if_eq:nnTF {#2} {true}
+        { \seq_put_right:Nn  \l__pkgloader_rule_packages_seq {#1} }
+        { \seq_remove_all:Nn \l__pkgloader_rule_packages_seq {#1} } }
+%    \end{macrocode}
+%  
+%  The |recommended| rules are loaded unless explicitly turned off.
+%  
+%    \begin{macrocode}
+\seq_new:N \l__pkgloader_rule_packages_seq
+\seq_put_right:Nn \l__pkgloader_rule_packages_seq {recommended}
+%    \end{macrocode}
+%  
+%  Process the options to populate |\l__pkgloader_rule_packages_seq|.
+%  
+%    \begin{macrocode}
+\cs_generate_variant:Nn \keyval_parse:NNn {NNv}
+\keyval_parse:NNv
+  \__pkgloader_process_option:n
+  \__pkgloader_process_option:nn
+  {opt@pkgloader.sty}
+\seq_remove_duplicates:N \l__pkgloader_rule_packages_seq
+%    \end{macrocode}
+%  
+%  Actually load the |.sty| files in |\l__pkgloader_rule_packages_seq|.
+%  Note that the actual file needs the |pkgloader-| prefix.
+%  
+%    \begin{macrocode}
+\seq_map_inline:Nn \l__pkgloader_rule_packages_seq
+  { \__pkgloader_RPkg:wnw {pkgloader-#1} }
+%    \end{macrocode}
+%  
+%  Finally, we make a show of using the proper macros for \LaTeX's
+%  benefit. If we don't, a \LaTeX\ error is issued.
+%  
+%    \begin{macrocode}
+\DeclareOption*{}
+\ProcessOptions\relax
+%    \end{macrocode}
+%  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  Finally, here are the error messages this package can generate.
+%  First a simple error for cycles, which should be improved to
+%  show the cause of the cycle.
+%  
+%    \begin{macrocode}
+\msg_new:nnn {pkgloader} {cyclic-order}
+  {  There~is~a~cycle~in~the~requested~package~loading~order.  }
+%    \end{macrocode}
+%  
+%  And the following is the error reported for certain package
+%  combinations that have been forbidden through an |error| rule.
+%  
+%    \begin{macrocode}
+\msg_new:nnnn {pkgloader} {illegal-combination}
+  {  A~combination~of~packages~fitting~the~following~condition~
+     was~requested:
+     \\\\\ \ \ \ #1\\\\
+     This~is~an~error~because~#2.  }
+  {  A~pkgloader~rule~was~requested~that~prohibits~the~logical~
+     combination~above~for~the~specified~reason.~It~is~probably~
+     a~good~reason.  }
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

@@ -1,0 +1,251 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \iffalse %%%%
+%                                                                              %
+%  Copyright (c) 2014 - Michiel Helvensteijn   (www.mhelvens.net)              %
+%                                                                              %
+%  https://github.com/mhelvens/latex-pkgloader                                 %
+%                                                                              %
+%  This work may be distributed and/or modified under the conditions           %
+%  of the LaTeX Project Public License, either version 1.3 of this             %
+%  license or (at your option) any later version. The latest version           %
+%  of this license is in       http://www.latex-project.org/lppl.txt           %
+%  and version 1.3 or later is part of all distributions of LaTeX              %
+%  version 2005/12/01 or later.                                                %
+%                                                                              %
+%  This work has the LPPL maintenance status `maintained'.                     %
+%                                                                              %
+%  The Current Maintainer of this work is Michiel Helvensteijn.                %
+%                                                                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \fi %%%%
+
+\documentclass[a4paper]{pkgloader-packagedoc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Setup                                                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Global Changes                                                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\changes{0.1.0}{2014/01/29}
+  {initial version}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}                                                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\maketitle
+
+\section {Introduction}  % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\LaTeX\ can be extended by loading packages, which can add definitions,
+change existing ones, or otherwise extend functionality of the language,
+using a "\usepackage", "\RequirePackage" or "\RequirePackageWithOptions" command.
+
+While the Turing-complete power of the \TeX\ family is quite useful at times, it does
+make it all too easy for independent package authors to step on each others
+toes. CTAN is full of conceptually independent packages that cannot be
+loaded together, or break if they are not loaded in a specific order.
+
+Yet, until now, there has been no automated package management to speak of.
+Document authors are usually told to avoid certain package combinations,
+or to load packages in some specific order.
+Occasionally, package authors patch their code to be aware of specific
+other packages, circumventing known conflicts.
+But this makes maintenance more difficult, because these package authors
+are `mixing concerns'; they put code related to other packages into their
+own package. And it is all done in an ad-hoc fashion.
+
+Enter "pkgloader".
+If this package becomes well-used, package authors will be able to
+develop in a more modular fashion. And more importantly, some frustration
+is taken away for the average document author.
+
+
+
+\subsection {Package Description} % % % % % % % % % % % % % % % % % % % % % %
+
+The idea is to load "pkgloader" before loading any other package
+% or document class
+.
+It can then intercept all package
+% and class
+loading requests, analyze them
+and load them properly, taking this burden off the shoulders of
+the average document author.
+
+The main file for a \LaTeX\ document using "pkgloader"
+looks something like this:
+\begin{latex}
+\documentclass{article}
+\RequirePackage{pkgloader}
+    \usepackage{xltxtra}
+    \usepackage{graphicx}
+     $\vdots$
+\LoadPackagesNow
+
+\begin{document}
+     $\vdots$
+\end{document}
+\end{latex}
+
+Between the second and sixth lines, the loading of all packages
+%and document classes
+is postponed. The "\LoadPackagesNow"
+command processes the information and
+loads the packages in some valid order. During this process,
+`conflict resolving' code may also be run, meant specifically to make
+other packages work together properly. If the above code were
+compiled without "pkgloader" (using the \XeTeX\ engine, in this case),
+the given order between "xltxtra" and "graphicx" would cause an error.
+%%
+The main advantage to this approach is that the complexity of dealing
+with package conflicts is moved to the "pkgloader" package and handled
+in a systematic manner.
+
+If you are a document author, this may be all you need to know to use
+"pkgloader". If you are interested in more advanced functionality,
+read on!
+
+
+
+\subsection {The \texttt{\textbackslash Load} Command} % % % % % % % %
+
+Each invocation if the "\Load" command sets up a rule about
+a package or packages, which are not necessarily ever loaded.
+These rules can come from any number of different sources.
+A central registry will be maintained together with "pkgloader" itself,
+specifying well-known conflicts and resolutions.
+Individual package authors, however, can supply their own rules,
+as can document authors. Though ideally, for the
+average document author, things should `just work'.
+
+\def\nt#1{\ensuremath{\hbox{\footnotesize$\langle$}\mathit{#1}\hbox{\footnotesize$\rangle$}}}
+\def\|{\ \mid\ }
+
+The "\Load" command expects the following syntax:
+
+\vskip\abovedisplayskip
+\begingroup
+\centering
+\begin{tabular}{r@{\ \ \ \ }r@{\ \ \ \ }l}
+	\nt{load}           &$::=$&   "\Load"$\ \nt{package}\ \;\nt{clause}_1\ \ldots\ \nt{clause}_i$  \\
+	                    &$ \|$&   "\Load error" $\ \ \ \ \,\nt{clause}_1\ \ldots\ \nt{clause}_i$                                              \\[2mm]
+	
+	\nt{package}        &$::=$&   "["$\;\nt{options}\;$"] {"$\;\nt{pkg}\;$"} ["$\;\nt{version}\;$"]"            \\[2mm]
+	
+	\nt{clause}         &$::=$&   $\nt{order}\ \ \|\ \ \nt{condition}\ \ \|\ \ \nt{reason}$  \\[2mm]
+	
+	\nt{order}          &$::=$&   "before {" $\nt{pkg}_1\,$", "$\ldots\,$", "$\nt{pkg}_j$ "}"  \\
+		                &$ \|$&   "after  {" $\nt{pkg}_1\,$", "$\ldots\,$", "$\nt{pkg}_j$ "}"  \\
+		                &$ \|$&   "early"                                               \\
+		                &$ \|$&   "late"                                                \\[2mm]
+		
+	\nt{condition}      &$::=$&   "always" $\ \ \|\ \ $ "if loaded" $\ \ \|\ \ $ "if {" $\nt{\phi}$ "}"                          \\[2mm]
+	
+	\nt{\phi}           &$::=$&   $\nt{pkg}$                         $\ \ \|\ \ $
+		                          $\nt{\phi}\ $"&&"$\ \nt{\phi}$    $\ \ \|\ \ $
+		                          $\nt{\phi}\ $"||"$\ \nt{\phi}$    $\ \ \|\ \ $
+		                          "!"$\;\nt{\phi}$                      $\ \ \|\ \ $
+		                          "("$\;\nt{\phi}\;$")"                          \\[2mm]
+	
+	\nt{reason}         &$::=$&   "because {" $\nt{token{-}list}$ "}"    
+\end{tabular}
+\endgroup
+\vskip\belowdisplayskip
+
+\noindent
+\nt{pkg} represents a package name.
+\nt{token{-}list} should expand to a human-readable text without formatting.
+It is used in error messages and such.
+
+The \( \nt{condition} \) clause determines under which package loading
+conditions any and all parts of a rule are invoked.
+Here is an example of the use of the \( \nt{condition} \) clause:
+\begin{latex}
+\Load {res-ie-lst} when {inputenc && listings}
+\Load {fixltx2e}   always
+\end{latex}
+|res-ie-lst| (a fictional package built specifically to resolve the
+conflict between |inputenc| and |listings|) will be loaded if requested
+specifically, or if both |inputenc| and |listings| are loaded. The |fixltx2e| package is
+always loaded, as it was created to smooth over some mistakes in the
+\LaTeXe\ core.
+The |always| keyword makes a rule unconditional. The |if loaded|
+directive makes a rule conditional on its package already being loaded anyway.
+This can be used to order two packages only when they are being loaded by other
+means.
+
+The |before| and |after| keywords should be pretty straightforward. They
+can be used for things like:
+\begin{latex}
+\Load {xltxtra} after {graphicx}
+\end{latex}
+But the set of \LaTeX\ packages is constantly growing, and it appears that
+some big packages should almost always be loaded early in the process,
+and others should almost always be loaded late. Therefore the |early|
+and |late| stages are provided as a fallback mechanism. If two packages
+are not related by an explicit application order, their loading order
+may still be decided by their relative stages: |early| before `normal' before |late|.
+That way, conflicts may be avoided in a majority of cases.
+This is implemented with |pkgloader-early| and |pkgloader-late| stubs in
+the loading order graph.
+
+Here is the example from above using
+the \( \nt{order} \) clause in addition to the \( \nt{condition} \) clause:
+\begin{latex}
+\Load {res-ie-lst} when {inputenc && listings}
+                  after {inputenc,   listings}
+\Load {fixltx2e} always early
+\end{latex}
+An important observation about the loading order is that it
+might form a cycle when contradictory ordering rules are specified:
+\begin{latex}
+\Load {pkg1} after {pkg2}
+\Load {pkg2} after {pkg1}
+\end{latex}
+In practice this could happen if the authors of |pkg1| and |pkg2|
+independently discover a conflict, and both try to solve it by patching
+their code and having their own package be loaded last. |pkgloader|
+can provide a clear error message when this happens, allowing the
+two package authors to seek contact and collaborate on a solution.
+
+Now, about the |error| keyword.
+Initially all package combinations are valid. But if two packages
+are irredeemably incompatible, their combination can be made to trigger
+an error message by a command such as the following:
+\begin{latex}
+\Load error when {algorithms && pseudocode}
+\end{latex}
+These two packages provide almost identical functionality and conflict
+on many command-names. It was generally agreed upon that they should
+never be loaded together. Document authors should simply choose one
+or the other.
+
+Finally, the \( \nt{reason} \) clause can be used to supply a
+human-readable explanation of a rule.
+We finish the above examples by providing reasons:
+\begin{latex}[basewidth=.598em]
+\Load {res-ie-lst} when {inputenc && listings}
+                  after {inputenc,   listings}
+     because {it allows the use of 1 byte unicode
+              characters in code listings}
+
+\Load {fixltx2e} always early
+     because {it fixes some imperfections in LaTeX2e}
+
+\Load error when {algorithms && pseudocode}
+     because {they provide almost identical functionality
+              and conflict on many command names}
+\end{latex}
+In the future, reasons will be extracted automatically to
+generate documentation. For now, they are displayed with error
+messages related to the rule in question.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
