@@ -1,3 +1,6 @@
+.project
+*.pdf
+*.tar.gz
 *.acn
 *.acr
 *.alg
