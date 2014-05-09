@@ -14,12 +14,11 @@ FILES="$DOC.sty          \
        $DOC-true.sty            \
        $DOC-false.sty            \
        $DOC-error.sty             \
-       $DOC-recommended.sty        \
-       $DOC-test-rules.sty          \
-       test1.sty test2.sty test3.sty \
+       $DOC-cls-pkg.sty            \
+       $DOC-recommended.sty         \
        README.md"
 
-VERSION=0.1.0
+VERSION=0.2.0
 
 ##################################################
 #

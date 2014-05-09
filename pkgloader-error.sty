@@ -45,12 +45,12 @@
 %%% package combination is illegal. None of them are
 %%% critical or fatal errors; we terminate the run manually.
 %
-\int_step_inline:nnvn {1} {1} {g__pkgloader_count_(pkgloader-error)_int} {
-	\bool_if:cT {g__pkgloader_used_(pkgloader-error)_(#1)_bool} {
+\int_step_inline:nnvn {1} {1} {g__pkgloader_count_(pkgloader-error.sty)_int} {
+	\bool_if:cT {g__pkgloader_used_(pkgloader-error.sty)_(#1)_bool} {
 		\msg_error:nnvv
 			{pkgloader} {illegal-combination}
-			{g__pkgloader_condition_(pkgloader-error)_(#1)_tl}
-			{g__pkgloader_reason_   (pkgloader-error)_(#1)_tl}
+			{g__pkgloader_condition_(pkgloader-error.sty)_(#1)_tl}
+			{g__pkgloader_reason_   (pkgloader-error.sty)_(#1)_tl}
 	}
 }
 

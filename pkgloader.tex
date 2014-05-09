@@ -32,6 +32,10 @@
 
 \changes{0.1.0}{2014/01/29}
   {initial version}
+  
+\changes{0.2.0}{2014/05/10}
+  {an important release, which implements most features described in
+   the pkgloader TUGBoat article, and fixes a ton of bugs}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}                                                               %
@@ -42,12 +46,16 @@
 \section {Introduction}  % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \LaTeX\ can be extended by loading packages
-using a \lstinline+\usepackage+, \lstinline+\RequirePackage+ or \lstinline+\RequirePackageWithOptions+ command.
-Packages can add definitions, change existing ones, or otherwise extend functionality of the language.
+using a \lstinline+\usepackage+, \lstinline+\RequirePackage+
+or \lstinline+\RequirePackageWithOptions+ command. Similarly, documents load
+a document class using \lstinline+\documentclass+, \lstinline+\LoadClass+
+or \lstinline+\LoadClassWithOptions+.
+Packages and classes can add definitions, change existing ones,
+or otherwise extend functionality of the language.
 
-While the Turing-complete power of the \TeX\ family is quite useful at times, it does
-make it all too easy for independent package authors to step on each others
-toes. CTAN is full of conceptually independent packages that cannot be
+While the Turing-complete power of the \TeX\ language is quite useful at times,
+it does make it all too easy for independent package authors to step on each
+others toes. CTAN is full of conceptually independent packages that cannot be
 loaded together, or break if they are not loaded in a specific order.
 
 Yet, until now, there has been no automated package management to speak of.
@@ -68,31 +76,48 @@ Enter \lstinline+pkgloader+.
 Here is an example of main file for a \LaTeX\ document
 which uses \lstinline+pkgloader+:
 
+\newcommand{\morecode}{\hbox{\vphantom{\LARGE(}\smash{\ \small\vdots}}}
+\newcommand{\anyorder}{
+	\smash{\small\hbox{
+		\(
+			\qquad\left.\vrule height 1em depth 1.4em width 0pt\right\}
+			\hbox{\textit{\rmfamily any order}}
+		\)
+}	}	}
+\newcommand{\optional}{
+	\smash{\small\raisebox{-.7\baselineskip}{
+		\(
+			\qquad\left.
+				\begin{array}{l}\\[.8em]\end{array}
+			\right\}
+			\hbox{\textit{\rmfamily optional}}
+		\)
+}	}	}
 \begin{latex}
-\documentclass{article}
-
 \RequirePackage{pkgloader}
-    \usepackage{xltxtra}
-    \usepackage[xetex]{graphicx}
-     $\smash{\raisebox{-1pt}{\small\vdots}}$
-\LoadPackagesNow
-
-\begin{document} $\ldots$ \end{document}
+    \documentclass{article}
+    \usepackage{algorithm}
+    \usepackage{hyperref} $\anyorder$
+    \usepackage{float}
+\LoadPackagesNow $\hskip44.3pt\optional$
+$\morecode$
+\begin{document} $\hdots$ \end{document}
 \end{latex}
 
-The idea is to load \lstinline+pkgloader+ before loading any other package.
-It can then intercept all package loading requests, analyze them
+The idea is to load \lstinline+pkgloader+ before loading any other
+package or class.
+It can then intercept all loading requests, analyze them
 and load them properly, taking this burden off the shoulders of
 the average document author.
 
-Between the second and sixth lines, the loading of all packages
-is postponed. The \lstinline+\LoadPackagesNow+ command then
-loads the packages in some valid order. During this process,
+Between the second and fifth line, the loading of all packages
+and classes is postponed. The \lstinline+\LoadPackagesNow+ command then
+loads the packages in some valid order. This also happens automatically
+upon reaching the end of the preamble. During this process,
 `conflict resolving' code may also be run, meant specifically to make
 other packages work together properly. If the above code were
-compiled without \lstinline+pkgloader+ (using the \XeTeX\ engine, as of this writing),
-the given order between \lstinline+xltxtra+ and \lstinline+graphicx+ would
-cause an error.
+compiled without \lstinline+pkgloader+,
+the given package order would cause errors.
 %%
 The main advantage to this approach is that the complexity of dealing
 with package conflicts is moved to the \lstinline+pkgloader+ package and handled
@@ -138,18 +163,27 @@ instead.
 
 
 
-\subsection {Package Loading Requests} % % % % % % % %
+\subsection {Package / Class Loading Requests} % % % % % % % %
 
 
 \marginnote{\ttfamily\bfseries\textbackslash usepackage\\
 	\textbackslash RequirePackage\\
-	\textbackslash RequirePackageW{\ldots}s}\noindent
-For requesting specific packages inside the |pkgloader| area,
-just use the three commands always used
-for this purpose: \lstinline+\usepackage+, \lstinline+\RequirePackage+ and
-\lstinline+\RequirePackageWithOptions+. Their syntax and effective semantics
+	\textbackslash RequirePackageW{\ldots}s
+	\textbackslash documentclass\\
+	\textbackslash LoadClass\\
+	\textbackslash LoadClassW{\ldots}s}\noindent
+For requesting specific packages or classes inside the
+|pkgloader| area, just use the commands always used
+for this purpose:
+	\lstinline+\usepackage+,
+	\lstinline+\RequirePackage+ and
+	\lstinline+\RequirePackageWithOptions+, as well as
+	\lstinline+\documentclass+,
+	\lstinline+\LoadClass+ and
+	\lstinline+\LoadClassWithOptions+.
+Their syntax and effective semantics
 are the same as they have always been. Their effects are just delayed,
-reordered and perhaps modified by the active rules.
+reordered and perhaps modified by the active \emph{package loading rules}.
 
 
 
@@ -157,7 +191,7 @@ reordered and perhaps modified by the active rules.
 
 \marginnote{\ttfamily\bfseries\textbackslash Load}\noindent
 Each invocation if the \lstinline+\Load+ command sets up a rule about
-a package or packages, which are not necessarily ever loaded.
+a class, package or packages, which are not necessarily ever loaded.
 These rules can come from any number of different sources.
 A central registry will be maintained together with \lstinline+pkgloader+ itself
 in the form of |pkgloader-recommended.sty|,
@@ -173,6 +207,7 @@ The \lstinline+\Load+ command expects the following syntax:
 \centering
 \begin{tabular}{r@{\ \ \ \ }r@{\ \ \ \ }l}
 	\nt{load}           &$::=$&   \lstinline+\Load+$\ \nt{package}\ \ \nt{clause}_1\ \ldots\ \nt{clause}_i$        \\
+	                    &$ \|$&   \lstinline+\Load class+$\ \nt{package}\ \ \nt{clause}_1\ \ldots\ \nt{clause}_i$        \\
 	                    &$ \|$&   \lstinline+\Load error+ $\ \ \ \,\nt{clause}_1\ \ldots\ \nt{clause}_i$         \\[2mm]
 	
 	\nt{package}        &$::=$&   \lstinline+[+$\;\nt{options}\;$\lstinline+] {+$\;\nt{pkg}\;$\lstinline+} [+$\;\nt{version}\;$\lstinline+]+     \\[2mm]
@@ -200,7 +235,7 @@ The \lstinline+\Load+ command expects the following syntax:
 \vskip\belowdisplayskip
 
 \noindent
-\nt{pkg} represents a package name.
+\nt{pkg} represents a package or class name.
 \nt{token{-}list} should expand to a human-readable text without formatting.
 
 \marginnote{\ttfamily\bfseries if}\noindent
@@ -317,8 +352,8 @@ I hope that, with feedback and community collaboration,
 use of this package will become widespread and package
 authors will be able to work in a more modular fashion.
 
-\emph{Future versions} of |pkgloader| will be able to deal with
-document classes, to intelligently merge package options
+\emph{Future versions} of |pkgloader| will be able to
+intelligently merge package options
 and to track packages loaded by other packages in order
 to better inform the user --- perhaps even fix problems
 by carrying information into the next run through auxiliary files.

@@ -108,7 +108,9 @@
 	alsoletter={_,:},
     morekeywords={before,after,late,early,if,
                   error,always,because,loaded},
-	moretexcs={RequirePackage,RequirePackageWithOptions,Load,LoadPackagesNow},
+	moretexcs={RequirePackage,RequirePackageWithOptions,%
+	           LoadClass,LoadClassWithOptions,%
+	           Load,LoadPackagesNow},
 	mathescape,
 	texcsstyle=*\bfseries
 }

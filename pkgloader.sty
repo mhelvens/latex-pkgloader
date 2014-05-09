@@ -48,7 +48,7 @@
 %    \begin{macrocode}
 \NeedsTeXFormat{LaTeX2e}
 \RequirePackage{expl3}
-\ProvidesExplPackage{pkgloader}{2014/01/29}{0.1.0}
+\ProvidesExplPackage{pkgloader}{2014/05/10}{0.2.0}
   {managing the options and loading order of LaTeX packages}
 %    \end{macrocode}
 %
@@ -110,16 +110,24 @@
 \cs_gset_eq:NN \__pkgloader_usepkg:wnw          \usepackage
 \cs_gset_eq:NN \__pkgloader_RPkg:wnw            \RequirePackage
 \cs_gset_eq:NN \__pkgloader_RPkgWithOptions:wnw \RequirePackageWithOptions
+\cs_gset_eq:NN \__pkgloader_doccls:wnw          \documentclass
+\cs_gset_eq:NN \__pkgloader_LCls:wnw            \LoadClass
+\cs_gset_eq:NN \__pkgloader_LClsWithOptions:wnw \LoadClassWithOptions
 %    \end{macrocode}
 %  
-%  And we define a command to restore the commands back to
-%  their pristine versions:
+%  And we define a command to clean up any and all commands
+%  that we change or introduce. It will be called when they
+%  are not needed anymore:
 %  
 %    \begin{macrocode}
-\cs_new_protected:Nn \__pkgloader_restore_commands: {
+\tl_new:N \__pkgloader_cleanup_commands:
+\tl_put_right:Nn \__pkgloader_cleanup_commands: {
   \cs_gset_eq:NN \usepackage                \__pkgloader_usepkg:wnw
   \cs_gset_eq:NN \RequirePackage            \__pkgloader_RPkg:wnw
   \cs_gset_eq:NN \RequirePackageWithOptions \__pkgloader_RPkgWithOptions:wnw
+  \cs_gset_eq:NN \documentclass             \__pkgloader_doccls:wnw
+  \cs_gset_eq:NN \LoadClass                 \__pkgloader_LCls:wnw
+  \cs_gset_eq:NN \LoadClassWithOptions      \__pkgloader_LClsWithOptions:wnw
 }
 %    \end{macrocode}
 %
@@ -131,11 +139,11 @@
 %  
 %  This function globally registers a package loading rule,
 %  which can be created with either the |\Load| command or
-%  any of the three hijacked |\usepackage| commands:
+%  any of the hijacked |\usepackage|-like commands:
 %  
 %    \begin{macrocode}
 \cs_new_protected:Nn \__pkgloader_register_rule:nnnnnnnnn {
-  % #1: package name
+  % #1: package or class name
   % #2: options
   % #3: version
   % #4: condition
@@ -146,8 +154,8 @@
   % #9: command
 %    \end{macrocode}
 %  
-%  If this package hasn't been seen before, register
-%  it and create a rule-counter for it:
+%  If this package or class hasn't been seen before,
+%  register it and create a rule-counter for it:
 %  
 %    \begin{macrocode}
   \prop_if_in:NnF \g__pkgloader_known_pkg_prop {#1} {
@@ -186,34 +194,52 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  
-%  These three functions are redefined to just register
-%  the package loading information rather than load the
-%  package immediately:
+%  These six macros are redefined to just register
+%  the loading information rather than load the
+%  package or class immediately. The distinction between
+%  package and class is made by prefixing the name
+%  with either |.sty| or |.cls| (which will be stripped
+%  off before the file is actually loaded):
 %  
 %    \begin{macrocode}
 \RenewDocumentCommand {\usepackage} { o m o }
-  { \__pkgloader_usepackage_cmd:nnnn
-        {\__pkgloader_usepkg:wnw} {#1} {#2} {#3} }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\usepackage} {#1} {#2.sty} {#3}
+        {pkgloader-cls-pkg.sty} {} }
 \RenewDocumentCommand {\RequirePackage} { o m o }
-  { \__pkgloader_usepackage_cmd:nnnn
-        {\__pkgloader_RPkg:wnw} {#1} {#2} {#3} }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\RequirePackage} {#1} {#2.sty} {#3}
+        {} {} }
 \RenewDocumentCommand {\RequirePackageWithOptions} { o m o }
-  { \__pkgloader_usepackage_cmd:nnnn
-        {\__pkgloader_RPkgWithOptions:wnw} {#1} {#2} {#3} }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\RequirePackageWithOptions} {#1} {#2.sty} {#3}
+        {} {} }
+\RenewDocumentCommand {\documentclass} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\documentclass} {#1} {#2.cls} {#3}
+        {} {pkgloader-cls-pkg.sty} }
+\RenewDocumentCommand {\LoadClass} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\LoadClass} {#1} {#2.cls} {#3}
+        {} {pkgloader-cls-pkg.sty} }
+\RenewDocumentCommand {\LoadClassWithOptions} { o m o }
+  { \__pkgloader_usepackage_cmd:nnnnnn
+        {\LoadClassWithOptions} {#1} {#2.cls} {#3}
+        {} {pkgloader-cls-pkg.sty} }
 %    \end{macrocode}
 %  
 %  Storing this information is delegated to the
 %  |\__pkgloader_register_rule:nnnnnnnnn| function:
 %  
 %    \begin{macrocode}
-\cs_new:Nn \__pkgloader_usepackage_cmd:nnnn {
+\cs_new:Nn \__pkgloader_usepackage_cmd:nnnnnn {
   \__pkgloader_register_rule:nnnnnnnnn
-    {#3} {#2} {#4}             % package name, options, version
-    {pkgloader-true}           % condition
-    {\c_true_bool}             % compiled condition
-    {} {}                      % predecessors, successors
-    {it~is~loaded~by~the~user} % reason
-    {#1}                       % command
+    {#3} {#2} {#4}                  % package name, options, version
+    {pkgloader-true.sty}            % condition
+    {\c_true_bool}                  % compiled condition
+    {#5} {#6}                       % predecessors, successors
+    {it~is~requested~by~the~author} % reason
+    {#1}                            % command
 }
 %    \end{macrocode}
 %
@@ -225,7 +251,8 @@
 %  
 %  This is a sophisticated user-level command for manipulating
 %  package loading order and conditions. It has a `non-standard'
-%  but convenient syntax, not showing any standard-
+%  but convenient syntax, which scans for clauses rather than
+%  taking standard parameters:
 %  
 %    \begin{macrocode}
 \NewDocumentCommand {\Load} {} {
@@ -234,6 +261,7 @@
 %  Initialize the variables used for storing given data:
 %  
 %    \begin{macrocode}
+  \tl_clear:N       \l__pkgloader_load_extension_tl
   \tl_clear:N       \l__pkgloader_load_options_tl
   \tl_clear:N       \l__pkgloader_load_name_tl
   \tl_clear:N       \l__pkgloader_load_version_tl
@@ -241,13 +269,14 @@
   \clist_clear:N    \l__pkgloader_load_succ_clist
   \tl_clear:N       \l__pkgloader_load_cond_tl
   \tl_clear:N       \l__pkgloader_load_because_tl
+  \tl_clear:N       \l__pkgloader_load_cmd_tl
   \bool_set_false:N \l__pkgloader_early_late_used_bool
 %    \end{macrocode}
 %  
 %  Start scanning for input:
 %  
 %    \begin{macrocode}
-  \__pkgloader_load_scan_pkg_:w
+  \__pkgloader_load_scan_ext_:w
 %    \end{macrocode}
 %    \uninteresting\begin{macrocode}
 }
@@ -255,9 +284,41 @@
 %  
 %  %%%%%%%%%
 %  
-%  This function starts scanning for the name of the package
+%  This function checks if the |class| keyword is given.
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_ext_:w {
+  \peek_charcode_remove_ignore_spaces:NTF c {% % % class
+    \__pkgloader_load_scan_ext_c:w
+  }{ % % % % % % % % % % % % % % % % % % % % % % % package details
+    \tl_set:Nn \l__pkgloader_load_extension_tl {.sty}
+    \tl_set:Nn \l__pkgloader_load_cmd_tl {\RequirePackage}
+    \__pkgloader_load_scan_pkg_:w
+  }
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  The |class| keyword indicates that this is a document
+%  class loading rule, rather than a package loading rule.
+%  We record this and then goes on to scan the details:
+%  
+%    \begin{macrocode}
+\cs_new_protected_nopar:Npn \__pkgloader_load_scan_ext_c:w lass {
+  \tl_set:Nn \l__pkgloader_load_extension_tl {.cls}
+  \tl_set:Nn \l__pkgloader_load_cmd_tl {\LoadClass}
+  \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-cls-pkg.sty}
+  \__pkgloader_load_scan_pkg_:w
+}
+%    \end{macrocode}
+%  
+%  %%%%%%%%%
+%  
+%  The following function starts scanning for the name of the package
 %  central to this rule, as well as the options and minimum
-%  version proposed for it.
+%  version proposed for it. It also checks if the |error|
+%  keyword is given.
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_:w {
@@ -279,7 +340,7 @@
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_e:w rror {
-  \tl_set:Nn \l__pkgloader_load_name_tl {pkgloader-error}
+  \tl_set:Nn \l__pkgloader_load_name_tl {pkgloader-error.sty}
   \__pkgloader_load_scan_clause_:w
 }
 %    \end{macrocode}
@@ -297,12 +358,16 @@
 %  
 %  %%%%%%%%%
 %  
-%  This scans the package name, peeks ahead for a minimum
-%  version, and otherwise goes on to scanning for clauses:
+%  This scans the package name (and adds the proper extension),
+%  peeks ahead for a minimum version, and otherwise goes on to
+%  scanning for clauses:
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_pkg_:nw #1 {
   \tl_set:Nn \l__pkgloader_load_name_tl {#1}
+  \tl_put_right:NV
+      \l__pkgloader_load_name_tl
+      \l__pkgloader_load_extension_tl
   \peek_charcode_remove_ignore_spaces:NTF [ {% % % % package version
     \__pkgloader_load_scan_version:nw
   }{ % % % % % % % % % % % % % % % % % % % % % % % % clauses
@@ -324,7 +389,7 @@
 %  
 %  %%%%%%%%%
 %  
-%  This is the starting- and return-point used to scan
+%  This is the start- and return-point used to scan
 %  for (additional) |\Load| clauses:
 %  
 %    \begin{macrocode}
@@ -363,7 +428,9 @@
 %  
 %  %%%%%%%%%
 %  
-%  This processes the ``|always|'' clause:
+%  This processes the ``|always|'' clause, which loads this
+%  package conditional on the ``|pkgloader-true|'' package being
+%  loaded (which always is):
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_al:w ways {
@@ -378,7 +445,9 @@
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_af:w ter #1 {
-  \clist_put_right:Nn \l__pkgloader_load_pred_clist {#1}
+  \clist_map_inline:nn {#1} {
+    \clist_put_right:Nn \l__pkgloader_load_pred_clist {##1.sty}
+  }
   \__pkgloader_load_scan_clause_:w
 }
 %    \end{macrocode}
@@ -400,7 +469,9 @@
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_bef:w ore #1 {
-  \clist_put_right:Nn \l__pkgloader_load_succ_clist {#1}
+  \clist_map_inline:nn {#1} {
+    \clist_put_right:Nn \l__pkgloader_load_succ_clist {##1.sty}
+  }
   \__pkgloader_load_scan_clause_:w
 }
 %    \end{macrocode}
@@ -413,7 +484,7 @@
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_e:w arly {
   \bool_set_true:N \l__pkgloader_early_late_used_bool
-  \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-early}
+  \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-early.sty}
   \__pkgloader_load_scan_clause_:w
 }
 %    \end{macrocode}
@@ -448,9 +519,7 @@
 %  
 %  %%%%%%%%%
 %  
-%  This processes the ``|always|'' clause, which loads this
-%  package conditional on the ``|pkgloader-true|'' package being
-%  loaded (which always is):
+%  This processes the ``|if|'' clause with a manual condition:
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_if_:nw #1 {
@@ -467,31 +536,17 @@
 %    \begin{macrocode}
 \cs_new_protected_nopar:Npn \__pkgloader_load_scan_clause_l:w ate {
   \bool_set_true:N \l__pkgloader_early_late_used_bool
-  \clist_put_right:Nn \l__pkgloader_load_pred_clist {pkgloader-late}
+  \clist_put_right:Nn \l__pkgloader_load_pred_clist {pkgloader-late.sty}
   \__pkgloader_load_scan_clause_:w
 }
 %    \end{macrocode}
 %  
-%  %%%%%%%%%
+%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%
 %  
 %  This function processes the collected data and registers it:
 %  
 %    \begin{macrocode}
 \cs_new_protected_nopar:Nn \__pkgloader_load_end: {
-%    \end{macrocode}
-%  
-%  If this package should not specifically go early or late,
-%  it goes inbetween the two:
-%  
-%    \begin{macrocode}
-  \bool_if:NF \l__pkgloader_early_late_used_bool {
-    \tl_if_eq:VnF \l__pkgloader_load_name_tl {pkgloader-early} {
-      \tl_if_eq:VnF \l__pkgloader_load_name_tl {pkgloader-late} {
-        \clist_put_right:Nn \l__pkgloader_load_pred_clist {pkgloader-early}
-        \clist_put_right:Nn \l__pkgloader_load_succ_clist {pkgloader-late }
-      }
-    }
-  }
 %    \end{macrocode}
 %  
 %  We remove the leading ``\texttt{\ \textbar\textbar\ }'' from the condition:
@@ -508,7 +563,7 @@
 %    \end{macrocode}
 %  
 %  We now take the condition and compile it to a |\bool_if:|
-%  kind of syntax. The user-syntax is preserved to use in
+%  kind of syntax. The original syntax is preserved to use in
 %  error messages and such:
 %  
 %    \begin{macrocode}
@@ -516,12 +571,12 @@
   \regex_replace_all:nnN
     { [^\&\|\(\)\!\s]+ }
     { (\c{graph_if_vertex_exist_p:Nn}
-       \c{g__pkgloader_pkg_graph}\cB\{\0\cE\}) }
+       \c{g__pkgloader_pkg_graph}\cB\{\0\.sty\cE\}) }
     \l__pkgloader_load_compd_cond_tl
 %    \end{macrocode}
 %  
 %  If no reason was given for this rule, it was obviously
-%  still because of reasons:
+%  `because of reasons':
 %  
 %    \begin{macrocode}
   \tl_if_empty:NT \l__pkgloader_load_because_tl
@@ -532,7 +587,7 @@
 %  registered:
 %  
 %    \begin{macrocode}
-  \__pkgloader_register_rule:VVVVVVVVn
+  \__pkgloader_register_rule:VVVVVVVVV
     \l__pkgloader_load_name_tl
     \l__pkgloader_load_options_tl
     \l__pkgloader_load_version_tl
@@ -541,25 +596,16 @@
     \l__pkgloader_load_pred_clist
     \l__pkgloader_load_succ_clist
     \l__pkgloader_load_because_tl
-    \__pkgloader_RPkg:wnw % TODO: make configurable
+    \l__pkgloader_load_cmd_tl
 %    \end{macrocode}
 %    \uninteresting\begin{macrocode}
 }
-%    \end{macrocode}
-%  
-%  The scanning functions need the following variants:
-%  
-%    \begin{macrocode}
 \cs_generate_variant:Nn \tl_if_eq:nnF                        {VnF}
 \cs_generate_variant:Nn \graph_gput_vertex:Nn                {NV}
 \cs_generate_variant:Nn \graph_gput_edge:Nnn                 {NnV,NVn}
 \cs_generate_variant:Nn \seq_gput_right:Nn                   {NV}
-\cs_generate_variant:Nn \__pkgloader_register_rule:nnnnnnnnn {VVVVVVVVn}
-%    \end{macrocode}
-%  
-%  And they need the following local variables:
-%  
-%    \begin{macrocode}
+\cs_generate_variant:Nn \__pkgloader_register_rule:nnnnnnnnn {VVVVVVVVV}
+\tl_new:N    \l__pkgloader_load_extension_tl
 \tl_new:N    \l__pkgloader_load_options_tl
 \tl_new:N    \l__pkgloader_load_name_tl
 \tl_new:N    \l__pkgloader_load_version_tl
@@ -567,7 +613,18 @@
 \clist_new:N \l__pkgloader_load_succ_clist
 \tl_new:N    \l__pkgloader_load_cond_tl
 \tl_new:N    \l__pkgloader_load_because_tl
+\tl_new:N    \l__pkgloader_load_cmd_tl
 \bool_new:N  \l__pkgloader_early_late_used_bool
+%    \end{macrocode}
+%  
+%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%  %%%%%%%%%
+%
+%  And here's the instruction to clean up the
+%  |\Load| command-name at the end:
+%  
+%    \begin{macrocode}
+\tl_put_right:Nn \__pkgloader_cleanup_commands:
+  { \cs_undefine:N \Load }
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -672,28 +729,49 @@
   }
 %    \end{macrocode}
 %  
-%  Finally, we put the applicable proposed orderings into the
+%  We put the applicable proposed orderings into the
 %  graph of selected packages:
 %  
 %    \begin{macrocode}
   \graph_gput_edges_from:NN \g__pkgloader_pkg_graph \l__pkgloader_order_graph
 %    \end{macrocode}
-%    \uninteresting\begin{macrocode}
-}
-%    \end{macrocode}
 %  
-%  This function needs the following variations:
+%  If there is a cycle in the derived package loading order: ERROR
 %  
 %    \begin{macrocode}
+  \graph_if_cyclic:NT \g__pkgloader_pkg_graph
+    {  \msg_fatal:nn {pkgloader} {cyclic-order}  }
+%    \end{macrocode}
+%  
+%  Finally, we apply some default orderings where needed:
+%  \begin{itemize}
+%    \item If a package should not specifically
+%          go early or late, it goes inbetween; and
+%    \item if a package should not specifically
+%          go before a class, it goes after.
+%  \end{itemize}
+%  
+%    \begin{macrocode}
+  \graph_map_vertices_inline:Nn \g__pkgloader_pkg_graph {
+    \seq_if_in:NnF \g__pkgloader_system_packages_seq {##1} {
+      \graph_acyclic_if_path_exist:NnnF \g__pkgloader_pkg_graph
+          {##1} {pkgloader-early.sty} {
+        \graph_acyclic_if_path_exist:NnnF \g__pkgloader_pkg_graph
+            {pkgloader-late.sty} {##1} {
+          \graph_put_edge:Nnn \g__pkgloader_pkg_graph {pkgloader-early.sty} {##1}
+          \graph_put_edge:Nnn \g__pkgloader_pkg_graph {##1} {pkgloader-late.sty}
+      } }
+      \graph_acyclic_if_path_exist:NnnF \g__pkgloader_pkg_graph
+          {##1} {pkgloader-cls-pkg.sty} {
+        \graph_put_edge:Nnn \g__pkgloader_pkg_graph {pkgloader-cls-pkg.sty} {##1}
+  } } }
+%    \end{macrocode}
+%    \uninteresting\begin{macrocode}
+}
 \cs_generate_variant:Nn \int_step_inline:nnnn  {nncn}
 \cs_generate_variant:Nn \bool_if:nT            {vT}
 \cs_generate_variant:Nn \withargs:nnn          {vvn}
 \cs_generate_variant:Nn \graph_gput_vertex:Nnn {Nnf}
-%    \end{macrocode}
-%  
-%  And it needs the following local variables:
-%  
-%    \begin{macrocode}
 \graph_new:N \l__pkgloader_order_graph
 \tl_new:N    \l__pkgloader_used_configs_tl
 \bool_new:N  \l__pkgloader_selection_changed_bool
@@ -705,8 +783,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  
-%  Now follows the user command to consolidate all package loading
-%  requests and do the `right thing' (tm).
+%  Now follows the user command to consolidate all package
+%  loading requests and do the `right thing' (tm). Invoking
+%  this command ends the work of |pkgloader|.
 %  
 %    \begin{macrocode}
 \NewDocumentCommand {\LoadPackagesNow} {} {
@@ -718,18 +797,11 @@
   \__pkgloader_select_packages:
 %    \end{macrocode}
 %  
-%  We then restore |\usepackage|, |\RequirePackage| and
-%  |\RequirePackageWithOptions| to their normal definitions.
+%  Now to clean up after |pkgloader|, restoring
+%  and removing various command-names.
 %  
 %    \begin{macrocode}
-  \__pkgloader_restore_commands:
-%    \end{macrocode}
-%  
-%  Now, if there is a cycle in the derived package loading order: ERROR
-%  
-%    \begin{macrocode}
-  \graph_if_cyclic:NT \g__pkgloader_pkg_graph
-    {  \msg_fatal:nn {pkgloader} {cyclic-order}  }
+  \__pkgloader_cleanup_commands:
 %    \end{macrocode}
 %  
 %  Then, for all used packages, in topological order\ldots
@@ -741,16 +813,16 @@
 %  \ldots load that package. Though note that this code is still quite
 %  incomplete, because it loads the first viable configuration. It should:
 %  \begin{enumerate}
-%      \item  use |\RequirePackageWithOptions| if necessary,
-%             |\RequirePackage| otherwise,
+%      \item  use the |WithOptions| version of the command
+%             if necessary,
 %      \item  allow custom merging schemes for options, and
 %      \item  use the latest required version.
 %  \end{enumerate}
 %    \begin{macrocode}
     \withargs:xn { \clist_item:nn{##2}{1} } {
-      \withargs:vvnvn {g__pkgloader_command_(##1)_(####1)_tl}
+      \withargs:vvfvn {g__pkgloader_command_(##1)_(####1)_tl}
                       {g__pkgloader_options_(##1)_(####1)_tl}
-                      {##1}
+                      {\__pkgloader_strip_extension:f{##1}}
                       {g__pkgloader_version_(##1)_(####1)_tl} {
         \IfValueTF {########2}
           { \IfValueTF {########4}
@@ -765,13 +837,51 @@
     }
   }
 }
+\cs_generate_variant:Nn \withargs:nn {xn}
+\cs_generate_variant:Nn \withargs:nnnnn {vvfvn}
 %    \end{macrocode}
 %  
-%  The above function needs the following function variations:
+%  And it needs the following auxiliary function to strip
+%  filenames from their four character extension:
 %  
 %    \begin{macrocode}
-\cs_generate_variant:Nn \withargs:nn {xn}
-\cs_generate_variant:Nn \withargs:nnnnn {vvnvn}
+\cs_new:Nn \__pkgloader_strip_extension:f {
+  \tl_reverse:f{
+    \tl_tail:f{\tl_tail:f{\tl_tail:f{\tl_tail:f{
+      \tl_reverse:n{#1}
+    }}}}
+  }
+}
+\cs_generate_variant:Nn \tl_reverse:n {f}
+%    \end{macrocode}
+%  
+%  It's a bit clunky. Is there a substring function
+%  in |expl3| we could use that I don't know about?
+%
+%  And here's the instruction to clean up the
+%  |\LoadPackagesNow| command-name at the end:
+%  
+%    \begin{macrocode}
+\tl_put_right:Nn \__pkgloader_cleanup_commands:
+  { \cs_undefine:N \LoadPackagesNow }
+%    \end{macrocode}
+%  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  
+%  
+%  
+%    \begin{macrocode}
+\cs_gset_eq:NN \__pkgloader_begin_env:n \begin
+\RenewDocumentCommand {\begin} {m} {
+  \tl_if_eq:nnT {#1} {document} {\LoadPackagesNow}
+  \__pkgloader_begin_env:n {#1}
+}
+\tl_put_right:Nn \__pkgloader_cleanup_commands:
+  { \cs_gset_eq:NN \begin \__pkgloader_begin_env:n }
 %    \end{macrocode}
 %  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -785,19 +895,34 @@
 %  with rules, possibly using the |always| clause.
 %  
 %    \begin{macrocode}
-\graph_gput_vertex:Nn \g__pkgloader_pkg_graph {pkgloader-true}
+\graph_gput_vertex:Nn \g__pkgloader_pkg_graph {pkgloader-true.sty}
+%    \end{macrocode}
+%  
+%  We keep a list of all pkgloader dummy packages:
+%  
+%    \begin{macrocode}
+\seq_new:N \g__pkgloader_system_packages_seq
+\cs_generate_variant:Nn \seq_gset_from_clist:Nn {Nx}
+\seq_gset_from_clist:Nx \g__pkgloader_system_packages_seq
+  {\tl_to_str:n
+     {pkgloader-true.sty,
+      pkgloader-false.sty,
+      pkgloader-early.sty,
+      pkgloader-late.sty,
+      pkgloader-cls-pkg.sty}}
 %    \end{macrocode}
 %  
 %  We then register the core logical rules of |pkgloader|,
-%  regarding such basics as |pkgmanager-false|,
-%  |pkgloader-error|, |pkgloader-early| and |pkgloader-late|.
+%  regarding fundamental package `stubs' like |pkgloader-false|,
+%  |pkgloader-error|, |pkgloader-early|, and so on.
 %  
 %    \begin{macrocode}
 \withargs:nn {of~the~mandatory~core~rules~of~pkgloader} {
   \Load error if {pkgloader-false}                because {#1}
-  \Load {pkgloader-true}  always                  because {#1}
-  \Load {pkgloader-early} always                  because {#1}
-  \Load {pkgloader-late}  always                  because {#1}
+  \Load {pkgloader-true}    always                because {#1}
+  \Load {pkgloader-early}   always                because {#1}
+  \Load {pkgloader-late}    always                because {#1}
+  \Load {pkgloader-cls-pkg} always                because {#1}
   \Load {pkgloader-early} before {pkgloader-late} because {#1}
 }
 %    \end{macrocode}
@@ -885,7 +1010,7 @@
      \\\\\ \ \ \ #1\\\\
      This~is~an~error~because~#2.  }
   {  A~pkgloader~rule~was~requested~that~prohibits~the~logical~
-     combination~above~for~the~specified~reason.~It~is~probably~
+     combination\\above~for~the~specified~reason.~It~is~probably~
      a~good~reason.  }
 %    \end{macrocode}
 %
