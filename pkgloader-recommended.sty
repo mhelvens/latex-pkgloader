@@ -49,6 +49,7 @@
 \Load {ntheorem}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
 \Load {subfig}        before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
 \Load {varioref}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
+\Load {varioref}      before {hyperref}  if {varioref && hyperref && cleveref} because {the cleveref documentation explicitly states that "If you are using both varioref and hyperref, make sure you are loading them in the correct order, otherwise cross-references will reference completely the wrong thing without any warning in the LaTeX output or log! The packages must be loaded in the following order: varioref, hyperref, cleveref."}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
