@@ -37,19 +37,8 @@
 \Load {caption}       before {subfig}    if loaded
 \Load {amsmath}       before {wasysym}   if loaded
 \Load {todonotes}     before {program}   if loaded
-\Load {algorithm2e}   before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {algorithmicx}  before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {aliascnt}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded, and the cleveref documentation explicitly states "that aliascnt must be loaded before cleveref"}
-\Load {amsmath}       before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {amsthm}        before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {caption}       before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {hyperref}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {IEEEtrantools} before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {listings}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {ntheorem}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {subfig}        before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
-\Load {varioref}      before {cleveref}  if loaded                             because {cleveref adds special support for this package if it is already loaded}
 \Load {varioref}      before {hyperref}  if {varioref && hyperref && cleveref} because {the cleveref documentation explicitly states that "If you are using both varioref and hyperref, make sure you are loading them in the correct order, otherwise cross-references will reference completely the wrong thing without any warning in the LaTeX output or log! The packages must be loaded in the following order: varioref, hyperref, cleveref."}
+\Load {cleveref} after  {algorithm2e,algorithmicx,aliascnt,amsmath,amsthm,caption,hyperref,IEEEtrantools,listings,ntheorem,subfig,varioref} if loaded because {cleveref adds special support for this package if it is already loaded}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
