@@ -20,13 +20,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  This is a preliminary list of recommended rules,
-%  gathered from a number of sources. It should be
-%  expanded.
+%  A list of recommended rules derived from
+%  <http://www.macfreek.nl/memory/LaTeX_package_conflicts>:
 %
 %    \begin{macrocode}
-
-% from <http://www.macfreek.nl/memory/LaTeX_package_conflicts>
 \Load {fixltx2e}  early              always
 \Load {fancyhdr}  before {hyperref}  if loaded
 \Load {fncychap}  before {hyperref}  if loaded
@@ -39,10 +36,32 @@
 \Load {caption}   before {subfig}    if loaded
 \Load {amsmath}   before {wasysym}   if loaded
 \Load {todonotes} before {program}   if loaded
-
-% from cleveref documentation and uses of "\@ifpackageloaded" in cleveref.sty
-\Load {cleveref} after  {algorithm2e,algorithmicx,aliascnt,amsmath,amsthm,caption,hyperref,IEEEtrantools,listings,ntheorem,subfig,varioref} if loaded because {cleveref adds special support for this package if it is already loaded}
-\Load {varioref} before {hyperref} if {varioref && hyperref && cleveref} because {the cleveref documentation explicitly requires varioref before hyperref before cleveref if all three are used}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules extracted from the cleveref
+%  documentation and uses of |\@ifpackageloaded| in
+%  |cleveref.sty|:
+%
+%    \begin{macrocode}
+\Load {cleveref} after   {algorithm2e,algorithmicx,
+                          aliascnt,amsmath,amsthm,caption,
+                          hyperref,IEEEtrantools,listings,
+                          ntheorem,subfig,varioref}
+                 if loaded
+                 because {cleveref adds special support
+                          for this package}
+\Load {varioref} before  {hyperref}
+                 if      {varioref && hyperref && cleveref}
+                 because {the cleveref documentation
+                          explicitly requires varioref
+                          before hyperref if all three
+                          packages are loaded}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
