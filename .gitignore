@@ -35,3 +35,4 @@
 *.tdo
 /build
 /tmp
+*~
