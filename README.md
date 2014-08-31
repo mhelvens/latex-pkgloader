@@ -1,9 +1,9 @@
 latex-pkgloader
 ===============
 
-LaTeX Package : latex-pkgloader 0.2.0
+LaTeX Package : latex-pkgloader 0.3.0
 
-Last Modified : 2014-05-10
+Last Modified : 2014-08-31
 
 Author        : Michiel Helvensteijn  (www.mhelvens.net)
 
@@ -17,7 +17,8 @@ A LaTeX package for managing the options and loading order of other packages
 Prerequisites
 -------------
 
-To use this package, you need the following packages:
+To use this package you need, apart from packages installed by default,
+the following package:
 
 *  `lt3graph`
 

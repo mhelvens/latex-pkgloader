@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                              %
-%  Copyright (c) 2013 - Michiel Helvensteijn - www.mhelvens.net                %
+%  Copyright (c) 2014 - Michiel Helvensteijn   (www.mhelvens.net)              %
 %                                                                              %
 %  https://github.com/mhelvens/latex-lt3graph                                  %
 %                                                                              %
@@ -42,7 +42,6 @@
 	\RequirePackage{noindentafter}
 	\RequirePackage{pkgloader-dry}
 \LoadPackagesNow
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Documentation Options                                                        %
