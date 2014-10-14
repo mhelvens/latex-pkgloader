@@ -55,6 +55,8 @@
                  if loaded
                  because {cleveref adds special support
                           for this package}
+\Load {cleveref} before   {autonum,hypdvips}
+                 if loaded
 \Load {varioref} before  {hyperref}
                  if      {varioref && hyperref && cleveref}
                  because {the cleveref documentation
