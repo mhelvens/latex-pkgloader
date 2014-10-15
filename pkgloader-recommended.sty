@@ -57,6 +57,8 @@
                           for this package}
 \Load {cleveref} before   {autonum,hypdvips}
                  if loaded
+                 because {the cleveref documentation
+                          explicitly says to do so}
 \Load {varioref} before  {hyperref}
                  if      {varioref && hyperref && cleveref}
                  because {the cleveref documentation
@@ -73,8 +75,11 @@
 %  <http://mirrors.dotsrc.org/ctan/macros/latex/contrib/natbib/natbib.pdf>:
 %
 %    \begin{macrocode}
-\Load {natbib}   before   {citeref}
+\Load {natbib}   before  {citeref}
                  if loaded
+                 because {the natbib documentation 
+                          explicitly requires citeref to be
+                          be load after natbib}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -86,10 +91,14 @@
 %  <http://mirrors.dotsrc.org/ctan/biblio/bibtex/contrib/apacite/apacite.pdf>:
 %
 %    \begin{macrocode}
-\Load {babel}    before   {apacite}
+\Load {babel}    before  {apacite}
                  if loaded
-\Load {hyperref} before   {apacite}
+                 because {babel's selectlanguage redefines 
+                          refname and bibname}
+\Load {hyperref} before  {apacite}
                  if loaded
+                 because {hyperref redefines citation and
+                          reference list commands}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -103,6 +112,8 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {cmap}
                  if loaded
+                 because {hyperref cannot write pdf settings 
+                          if cmap already wrote to pdf}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -117,8 +128,12 @@
 \Load {hyperref} before  {ellipsis,amsrefs,chappg,dblaccnt,
                           linguex}
                  if loaded
+                 because {the hyperref documentation
+                          explicitly says to do so}
 \Load {hyperref} after   {multind,natbib,setspace}
                  if loaded
+                 because {the hyperref documentation
+                          explicitly says to do so}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -131,6 +146,8 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {glossaries}
                  if loaded
+                 because {otherwise terms won't be 
+                          clickable hyperlinks}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,6 +161,8 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {hypcap}
                  if loaded
+                 because {hypcap redefines hyperref's 
+                          caption command}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
