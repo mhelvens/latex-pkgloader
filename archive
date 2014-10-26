@@ -18,7 +18,7 @@ FILES="$DOC.sty          \
        $DOC-recommended.sty         \
        README.md"
 
-VERSION=0.3.0
+VERSION=$1
 
 ##################################################
 #
@@ -34,7 +34,7 @@ mv README.md README
 
 ### Zero out the checksum value
 #
-sed -r -i.bak 's/\\CheckSum\{[0-9]*\}/\\CheckSum\{0\}/;' $DOC.sty
+sed -r -i 's/\\CheckSum\{[0-9]*\}/\\CheckSum\{0\}/;' $DOC.sty
 
 ### First compilation
 #
