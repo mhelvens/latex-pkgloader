@@ -141,13 +141,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  A list of recommended rules derived from
-%  <http://mirrors.dotsrc.org/ctan/macros/latex/contrib/glossaries/glossaries-user.pdf>:
+%  <http://mirrors.dotsrc.org/ctan/macros/latex/contrib/glossaries/glossaries-user.pdf>,
+%  <http://mirrors.dotsrc.org/ctan/macros/latex/contrib/glossaries/glossariesbegin.pdf>:
 %
 %    \begin{macrocode}
 \Load {hyperref} before  {glossaries}
                  if loaded
                  because {otherwise terms won't be 
                           clickable hyperlinks}
+\Load {glossaries} after {babel,polyglossia,inputenc,
+                          fontenc,doc}
+                 if loaded
+                 because {the glossaries documentation
+                          explicitly says to do so}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
