@@ -7,6 +7,8 @@ Last Modified : 2014-11-30
 
 Author        : Michiel Helvensteijn  (www.mhelvens.net)
 
+CTAN page     : https://www.ctan.org/pkg/pkgloader
+
 
 Summary
 -------
@@ -38,11 +40,10 @@ it in a place where your LaTeX distribution can find it.
 Documentation
 -------------
 
-`pkgloader.pdf` is provided directly in the package archive. To
-generate the documentation yourself, run LaTeX on pkgloader.tex.
+`pkgloader.pdf` is provided directly in the package archive or [via CTAN](http://mirrors.ctan.org/macros/latex/contrib/pkgloader/pkgloader.pdf).
+To generate the documentation yourself, run LaTeX on pkgloader.tex.
 (`pkgloader.tex` does not contain the package code itself; it inputs
  `pkgloader.sty` directly to document the implementation)
-
 
 License
 -------
