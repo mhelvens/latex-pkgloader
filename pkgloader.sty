@@ -844,7 +844,7 @@
 %  filenames from their four character extension:
 %  
 %    \begin{macrocode}
-\cs_new:Nn \__pkgloader_strip_extension:f {
+\cs_new:Npn \__pkgloader_strip_extension:f #1 {
   \tl_reverse:f{
     \tl_tail:f{\tl_tail:f{\tl_tail:f{\tl_tail:f{
       \tl_reverse:n{#1}
