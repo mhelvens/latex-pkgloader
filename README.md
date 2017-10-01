@@ -1,9 +1,9 @@
 latex-pkgloader
 ===============
 
-LaTeX Package : latex-pkgloader 0.5.0
+LaTeX Package : latex-pkgloader 0.5.1
 
-Last Modified : 2014-11-30
+Last Modified : 2017-09-20
 
 Author        : Michiel Helvensteijn  (www.mhelvens.net)
 
