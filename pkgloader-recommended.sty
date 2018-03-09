@@ -172,3 +172,20 @@
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Rules from tex.stackexchange answer
+%  <https://tex.stackexchange.com/a/64457/9075>:
+%
+%    \begin{macrocode}
+\Load {mmap} before  {fontenc}
+                 if loaded
+                 because {mmap otherwise complains}
+\Load {cmap} before  {fontenc}
+                 if loaded
+                 because {cmap otherwise complains}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
