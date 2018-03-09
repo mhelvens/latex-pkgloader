@@ -176,16 +176,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Author of selnolig at a comment to question
-%  https://tex.stackexchange.com/q/419218/9075
+%  <https://tex.stackexchange.com/q/419218/9075>
 %  on tex.stackexchange
 %
 %  > As a general rule, selnolig should be loaded after babel.
 %
 %    \begin{macrocode}
 \Load {babel} before  {selnolig}
-                 if loaded
-                 because {the author states that t it can matter
-                          in other circumstances}
+              if loaded
+              because {the author states that t it can matter
+                       in other circumstances}
+\Load {fontspec} before {selnolig}
+                 if {selnolig}
+                 because {selnolig depends on fontspec}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
