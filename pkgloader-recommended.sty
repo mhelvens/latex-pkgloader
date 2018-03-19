@@ -172,3 +172,22 @@
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Rules from tex.stackexchange answer
+%  <https://tex.stackexchange.com/a/64457/9075>:
+%
+%    \begin{macrocode}
+\Load {mmap} before  {fontenc}
+             if loaded
+             because {otherwise some fonts may be unprocessed (cmap warning)}`
+             % http://texdoc.net/pkg/cmap
+\Load {cmap} before  {fontenc}
+             if loaded
+             because {otherwise some fonts may be unprocessed (cmap warning)}`
+             % http://texdoc.net/pkg/cmap
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
