@@ -77,7 +77,7 @@
 %    \begin{macrocode}
 \Load {refenums} after {hyperref, cleveref, csquotes, ifthen}
                  if loaded
-                 because {refenums relies on these packages}
+                 because {loading the required packages before refenums prevents "Option clash" error messages}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
