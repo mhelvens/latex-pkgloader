@@ -1,9 +1,9 @@
 latex-pkgloader
 ===============
 
-LaTeX Package : latex-pkgloader 0.5.1
+LaTeX Package : latex-pkgloader 0.6.0
 
-Last Modified : 2017-09-20
+Last Modified : 2018-03-24
 
 Author        : Michiel Helvensteijn  (www.mhelvens.net)
 
@@ -49,5 +49,5 @@ License
 -------
 
 This material is subject to the LaTeX Project Public License. See
-http://www.ctan.org/tex-archive/help/Catalogue/licenses.lppl.html 
+http://www.ctan.org/tex-archive/help/Catalogue/licenses.lppl.html
 for the details of that license.

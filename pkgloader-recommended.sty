@@ -55,7 +55,7 @@
                  if loaded
                  because {cleveref adds special support
                           for this package}
-\Load {cleveref} before   {autonum,hypdvips}
+\Load {cleveref} before  {autonum,hypdvips}
                  if loaded
                  because {the cleveref documentation
                           explicitly says to do so}
@@ -72,28 +72,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Extraced from the output of cleveref when loading glossaries before cleveref
-%
-\Load {glossaries} before {cleveref}
-                   if loaded
-                   because {glossaries internally loads amsmath and cleveref requires that amsmath is loaded before cleveref.}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  A list of recommended rules extracted from the refenums
-%  documentation and code:
-%
-%    \begin{macrocode}
-\Load {refenums} after {hyperref, cleveref, csquotes, ifthen}
-                 if loaded
-                 because {loading the required packages before refenums prevents "Option clash" error messages}
-%    \end{macrocode}
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 %  A list of recommended rules derived from
 %  <http://mirrors.dotsrc.org/ctan/macros/latex/contrib/natbib/natbib.pdf>:
 %
@@ -101,7 +79,7 @@
 \Load {natbib}   before  {citeref}
                  if loaded
                  because {the natbib documentation
-                          explicitly requires citeref to be
+                          explicitly requires citeref to
                           be load after natbib}
 %    \end{macrocode}
 %
@@ -161,6 +139,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  A list of recommended rules derived from
@@ -196,23 +175,16 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  Author of selnolig at a comment to question
-%  <https://tex.stackexchange.com/q/419218/9075>
-%  on tex.stackexchange
-%
-%  > As a general rule, selnolig should be loaded after babel.
+%  A list of recommended rules derived from
+%  <https://tex.stackexchange.com/questions/419218/how-to-use-selnolig-package-together-with-default-lualalatex-font#comment1049043_419218>:
 %
 %    \begin{macrocode}
 \Load {babel} before  {selnolig}
               if loaded
-              because {the author states that it can matter
-                       in other circumstances}
-              % See https://tex.stackexchange.com/questions/419218/how-to-use-selnolig-package-together-with-default-lualalatex-font#comment1049043_419218 for the comment.
-\Load {fontspec} before {selnolig}
-                 always
-                 because {selnolig depends on fontspec}
+              because {this was recommended by selnolig's author}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -220,18 +192,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  Rules from tex.stackexchange answer
-%  <https://tex.stackexchange.com/a/64457/9075>:
+%  A list of recommended rules derived from
+%  <https://tex.stackexchange.com/questions/64409/proper-use-of-cmap-and-mmap/64457#64457>:
 %
 %    \begin{macrocode}
-\Load {mmap} before  {fontenc}
-             if loaded
-             because {otherwise some fonts may be unprocessed (cmap warning)}`
-             % http://texdoc.net/pkg/cmap
-\Load {cmap} before  {fontenc}
-             if loaded
-             because {otherwise some fonts may be unprocessed (cmap warning)}`
-             % http://texdoc.net/pkg/cmap
+\Load {fontenc} after   {cmap,mmap}
+                if loaded
+                because {otherwise some fonts may be unprocessed}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -239,12 +206,40 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  lstingsutf8
+%  A list of recommended rules derived from
+%  <https://ctan.org/pkg/listingsutf8>:
 %
 %    \begin{macrocode}
-\Load {listingsutf8} after {listings}
+\Load {listingsutf8} after   {listings}
                      if loaded
-                     because {listingsutf8 patches macros of listings}
+                     because {it patches macros defined by listings}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from the cleveref code:
+%
+%    \begin{macrocode}
+\Load {glossaries} before  {cleveref}
+                   if loaded
+                   because {glossaries loads amsmath, which needs to be loaded before cleveref}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from the refenums
+%  documentation and code:
+%
+%    \begin{macrocode}
+\Load {refenums} after   {hyperref,cleveref,csquotes,ifthen}
+                 if loaded
+                 because {it prevents an options clash}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
