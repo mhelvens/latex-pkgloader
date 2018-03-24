@@ -77,7 +77,7 @@
 %    \begin{macrocode}
 \Load {natbib}   before  {citeref}
                  if loaded
-                 because {the natbib documentation 
+                 because {the natbib documentation
                           explicitly requires citeref to be
                           be load after natbib}
 %    \end{macrocode}
@@ -93,7 +93,7 @@
 %    \begin{macrocode}
 \Load {babel}    before  {apacite}
                  if loaded
-                 because {babel's selectlanguage redefines 
+                 because {babel's selectlanguage redefines
                           refname and bibname}
 \Load {hyperref} before  {apacite}
                  if loaded
@@ -112,7 +112,7 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {cmap}
                  if loaded
-                 because {hyperref cannot write pdf settings 
+                 because {hyperref cannot write pdf settings
                           if cmap already wrote to pdf}
 %    \end{macrocode}
 %
@@ -147,7 +147,7 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {glossaries}
                  if loaded
-                 because {otherwise terms won't be 
+                 because {otherwise terms won't be
                           clickable hyperlinks}
 \Load {glossaries} after {babel,polyglossia,inputenc,
                           fontenc,doc}
@@ -167,7 +167,7 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {hypcap}
                  if loaded
-                 because {hypcap redefines hyperref's 
+                 because {hypcap redefines hyperref's
                           caption command}
 %    \end{macrocode}
 %
@@ -190,6 +190,25 @@
 \Load {fontspec} before {selnolig}
                  always
                  because {selnolig depends on fontspec}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Rules from tex.stackexchange answer
+%  <https://tex.stackexchange.com/a/64457/9075>:
+%
+%    \begin{macrocode}
+\Load {mmap} before  {fontenc}
+             if loaded
+             because {otherwise some fonts may be unprocessed (cmap warning)}`
+             % http://texdoc.net/pkg/cmap
+\Load {cmap} before  {fontenc}
+             if loaded
+             because {otherwise some fonts may be unprocessed (cmap warning)}`
+             % http://texdoc.net/pkg/cmap
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
