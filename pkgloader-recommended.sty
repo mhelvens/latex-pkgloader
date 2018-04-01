@@ -24,7 +24,7 @@
 %  <http://www.macfreek.nl/memory/LaTeX_package_conflicts>:
 %
 %    \begin{macrocode}
-\Load {fixltx2e}  early              always
+\Load {fixltx2e}  early              if loaded
 \Load {fancyhdr}  before {hyperref}  if loaded
 \Load {fncychap}  before {hyperref}  if loaded
 \Load {float}     before {hyperref}  if loaded
@@ -55,7 +55,7 @@
                  if loaded
                  because {cleveref adds special support
                           for this package}
-\Load {cleveref} before   {autonum,hypdvips}
+\Load {cleveref} before  {autonum,hypdvips}
                  if loaded
                  because {the cleveref documentation
                           explicitly says to do so}
@@ -69,6 +69,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  A list of recommended rules derived from
@@ -77,8 +78,8 @@
 %    \begin{macrocode}
 \Load {natbib}   before  {citeref}
                  if loaded
-                 because {the natbib documentation 
-                          explicitly requires citeref to be
+                 because {the natbib documentation
+                          explicitly requires citeref to
                           be load after natbib}
 %    \end{macrocode}
 %
@@ -93,7 +94,7 @@
 %    \begin{macrocode}
 \Load {babel}    before  {apacite}
                  if loaded
-                 because {babel's selectlanguage redefines 
+                 because {babel's selectlanguage redefines
                           refname and bibname}
 \Load {hyperref} before  {apacite}
                  if loaded
@@ -112,7 +113,7 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {cmap}
                  if loaded
-                 because {hyperref cannot write pdf settings 
+                 because {hyperref cannot write pdf settings
                           if cmap already wrote to pdf}
 %    \end{macrocode}
 %
@@ -138,6 +139,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  A list of recommended rules derived from
@@ -147,7 +149,7 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {glossaries}
                  if loaded
-                 because {otherwise terms won't be 
+                 because {otherwise terms won't be
                           clickable hyperlinks}
 \Load {glossaries} after {babel,polyglossia,inputenc,
                           fontenc,doc}
@@ -167,8 +169,77 @@
 %    \begin{macrocode}
 \Load {hyperref} before  {hypcap}
                  if loaded
-                 because {hypcap redefines hyperref's 
+                 because {hypcap redefines hyperref's
                           caption command}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from
+%  <https://tex.stackexchange.com/questions/419218/how-to-use-selnolig-package-together-with-default-lualalatex-font#comment1049043_419218>:
+%
+%    \begin{macrocode}
+\Load {babel} before  {selnolig}
+              if loaded
+              because {this was recommended by selnolig's author}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from
+%  <https://tex.stackexchange.com/questions/64409/proper-use-of-cmap-and-mmap/64457#64457>:
+%
+%    \begin{macrocode}
+\Load {fontenc} after   {cmap,mmap}
+                if loaded
+                because {otherwise some fonts may be unprocessed}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from
+%  <https://ctan.org/pkg/listingsutf8>:
+%
+%    \begin{macrocode}
+\Load {listingsutf8} after   {listings}
+                     if loaded
+                     because {it patches macros defined by listings}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from the cleveref code:
+%
+%    \begin{macrocode}
+\Load {glossaries} before  {cleveref}
+                   if loaded
+                   because {glossaries loads amsmath, which needs to be loaded before cleveref}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from the refenums
+%  documentation and code:
+%
+%    \begin{macrocode}
+\Load {refenums} after   {hyperref,cleveref,csquotes,ifthen}
+                 if loaded
+                 because {it prevents an options clash}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
