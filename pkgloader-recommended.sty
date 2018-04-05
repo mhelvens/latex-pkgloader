@@ -243,3 +243,20 @@
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Extracted https://tex.stackexchange.com/a/162436/9075,
+%  where the author of microtype recommends loading settings.
+%  Furthermore, use the hints from https://texdoc.org/pkg/microtype -> "Hints and Caveats"
+%
+%    \begin{macrocode}
+\Load {fontspec} before {microtype}
+                 if {fontspec}
+                 because {the author recommends without any further reasoning}
+\Load {babel} before {microtype}
+                 if {babel}
+                 because {microtype uses features of babel in case babel is loaded}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
