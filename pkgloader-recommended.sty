@@ -247,16 +247,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  Extracted https://tex.stackexchange.com/a/162436/9075,
-%  where the author of microtype recommends loading settings.
-%  Furthermore, use the hints from https://texdoc.org/pkg/microtype -> "Hints and Caveats"
+%  where the author of microtype recommends loading settings and
+%  from microtype.pdf (https://texdoc.net/pkg/microtype, v2.7a, page 23):
+%  "Instead of adding these commands manually to your document, you may also load microtype with the babel option (see section 3.5). The current language will then be automatically detected and the contexts set accordingly."
 %
 %    \begin{macrocode}
-\Load {fontspec} before {microtype}
-                 if {fontspec}
-                 because {the author recommends without any further reasoning}
 \Load {babel} before {microtype}
-                 if {babel}
-                 because {microtype uses features of babel in case babel is loaded}
+              if loaded
+              because {microtype uses the language setting of babel in case babel is loaded}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
