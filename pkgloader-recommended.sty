@@ -175,6 +175,22 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules extracted from the uri
+%  documentation (http://texdoc.net/pkg/uri) and uses of
+% |\@ifpackageloaded| and |\RequirePackage| in  |uri.sty|:
+%
+%    \begin{macrocode}
+\Load {hyperref} before {uri}
+                 if loaded
+                 because {uri uses hyperref's commands if hyperref is loaded. See also Section 2 of uri.pdf.}
+\Load {url} before {uri}
+            if loaded
+            because {uri has a RequirePackage on url}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
