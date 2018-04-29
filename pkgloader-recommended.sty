@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \iffalse %%%%
 %                                                                              %
-%  Copyright (c) 2014 - Michiel Helvensteijn   (www.mhelvens.net)              %
+%  Copyright (c) 2018 - Michiel Helvensteijn   (www.mhelvens.net)              %
 %                                                                              %
 %  https://github.com/mhelvens/latex-pkgloader                                 %
 %                                                                              %
@@ -175,7 +175,6 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  A list of recommended rules derived from
@@ -240,6 +239,36 @@
 \Load {refenums} after   {hyperref,cleveref,csquotes,ifthen}
                  if loaded
                  because {it prevents an options clash}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from
+%  <http://texdoc.net/pkg/microtype> (v2.7a, page 23):
+%
+%    \begin{macrocode}
+\Load {babel} before {microtype}
+              if loaded
+              because {microtype can use the language setting of babel}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules extracted from:
+%  <http://texdoc.net/pkg/uri> (section 2) and uses of
+% |\@ifpackageloaded| and |\RequirePackage| in |uri.sty|:
+%
+%    \begin{macrocode}
+\Load {hyperref} before {uri}
+                 if loaded
+                 because {uri uses hyperref's commands if hyperref is loaded}
+\Load {url} before {uri}
+            if loaded
+            because {uri has a RequirePackage on url}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
