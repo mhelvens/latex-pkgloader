@@ -177,23 +177,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  A list of recommended rules extracted from the uri
-%  documentation (http://texdoc.net/pkg/uri) and uses of
-% |\@ifpackageloaded| and |\RequirePackage| in  |uri.sty|:
-%
-%    \begin{macrocode}
-\Load {hyperref} before {uri}
-                 if loaded
-                 because {uri uses hyperref's commands if hyperref is loaded. See also Section 2 of uri.pdf.}
-\Load {url} before {uri}
-            if loaded
-            because {uri has a RequirePackage on url}
-%    \end{macrocode}
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 %  A list of recommended rules derived from
 %  <https://tex.stackexchange.com/questions/419218/how-to-use-selnolig-package-together-with-default-lualalatex-font#comment1049043_419218>:
 %
@@ -262,15 +245,30 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  Extracted https://tex.stackexchange.com/a/162436/9075,
-%  where the author of microtype recommends loading settings and
-%  from microtype.pdf (http://texdoc.net/pkg/microtype, v2.7a, page 23):
-%  "Instead of adding these commands manually to your document, you may also load microtype with the babel option (see section 3.5). The current language will then be automatically detected and the contexts set accordingly."
+%  A list of recommended rules derived from
+%  <http://texdoc.net/pkg/microtype> (v2.7a, page 23):
 %
 %    \begin{macrocode}
 \Load {babel} before {microtype}
               if loaded
-              because {microtype uses the language setting of babel in case babel is loaded}
+              because {microtype can use the language setting of babel}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules extracted from:
+%  <http://texdoc.net/pkg/uri> (section 2) and uses of
+% |\@ifpackageloaded| and |\RequirePackage| in |uri.sty|:
+%
+%    \begin{macrocode}
+\Load {hyperref} before {uri}
+                 if loaded
+                 because {uri uses hyperref's commands if hyperref is loaded}
+\Load {url} before {uri}
+            if loaded
+            because {uri has a RequirePackage on url}
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
