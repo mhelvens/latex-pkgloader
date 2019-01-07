@@ -767,7 +767,6 @@
 }
 \cs_generate_variant:Nn \int_step_inline:nnnn  {nnvn}
 \cs_generate_variant:Nn \bool_if:nT            {vT}
-\cs_generate_variant:Nn \withargs:nnn          {vvn}
 \cs_generate_variant:Nn \graph_gput_vertex:Nnn {Nnf}
 \graph_new:N \l__pkgloader_order_graph
 \tl_new:N    \l__pkgloader_used_configs_tl
@@ -834,8 +833,8 @@
     }
   }
 }
-\cs_generate_variant:Nn \withargs:nn {xn}
-\cs_generate_variant:Nn \withargs:nnnnn {vvfvn}
+\cs_generate_variant:Nn \withargs:nn {x}
+\cs_generate_variant:Nn \withargs:nnnnn {vvfv}
 %    \end{macrocode}
 %  
 %  And it needs the following auxiliary function to strip
