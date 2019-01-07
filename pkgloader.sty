@@ -658,7 +658,7 @@
 %  
 %    \begin{macrocode}
     \prop_map_inline:Nn \g__pkgloader_known_pkg_prop {%%%%%%%%%%%%%%   ##1
-    \int_step_inline:nncn {1} {1} {g__pkgloader_count_(##1)_int} {%% ####1
+    \int_step_inline:nnvn {1} {1} {g__pkgloader_count_(##1)_int} {%% ####1
 %    \end{macrocode}
 %  
 %  If the current configuration should be loaded but still
@@ -765,7 +765,7 @@
 %    \end{macrocode}
 %    \uninteresting\begin{macrocode}
 }
-\cs_generate_variant:Nn \int_step_inline:nnnn  {nncn}
+\cs_generate_variant:Nn \int_step_inline:nnnn  {nnvn}
 \cs_generate_variant:Nn \bool_if:nT            {vT}
 \cs_generate_variant:Nn \withargs:nnn          {vvn}
 \cs_generate_variant:Nn \graph_gput_vertex:Nnn {Nnf}
