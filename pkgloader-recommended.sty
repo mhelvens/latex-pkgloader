@@ -272,3 +272,17 @@
 %    \end{macrocode}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  A list of recommended rules derived from
+%  <https://texdoc.org/serve/imakeidx> (v1.3e, page 18)
+%  and <https://tex.stackexchange.com/q/22012/177>:
+%
+%    \begin{macrocode}
+\Load {imakeidx} before {hyperref}
+              if loaded
+              because {this is assumed in imakeidx implementation}
+%    \end{macrocode}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
